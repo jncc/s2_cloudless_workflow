@@ -1,0 +1,33 @@
+[CheckInputs]
+stateFolder = /workflow/state
+tempFolder = /workflow/temp
+outputFolder = /workflow/output
+
+
+[CheckInputs]
+stateFolder = /workflow/state
+tempFolder = /workflow/temp
+outputFolder = /workflow/output
+
+[PrepareInputs]
+stateFolder = /workflow/state
+tempFolder = /workflow/temp
+outputFolder = /workflow/output
+
+[GenerateCloudmask]
+stateFolder = /workflow/state
+tempFolder = /workflow/temp
+outputFolder = /workflow/output
+cloudDetectorThreshold = 0.4
+cloudDetectorAverageOver = 4
+cloudDetectorDilationSize = 2
+cloudDetectorAllBands = False
+
+[GenerateCloudShadowMask]
+stateFolder = /workflow/state
+tempFolder = /workflow/temp
+outputFolder = /workflow/output
+cloudDetectorThreshold = 0.4
+cloudDetectorAverageOver = 4
+cloudDetectorDilationSize = 2
+cloudDetectorAllBands = False
