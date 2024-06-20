@@ -1,1 +1,34 @@
 # s2_cloudless_workflow
+
+## Container
+
+There is a container currently built off the `fmask.dockerfile` that currently sets up the basics, including a `/working` folder. There is a `/working/data` subfolder under that which should be mounted onto from the the outside to allow for transfer of data into and out of the container. Currently to run the container we are just dropping into bash and running it interactively;
+
+```bash
+sudo docker run --rm -it -v ~/local/working/folder:/working/data --entrypoint bash cloudmasking:0.0.1
+```
+
+## Workflow
+
+There is an included luigi workflow that can be run from inside the container. There is an example config file that contains some default parameters, based around using the working directory in container as a base. Can be run with the following from the workflows directory.
+
+```bash
+PYTHONPATH='.' LUIGI_CONFIG_PATH='/working/data/luigi.cfg' luigi --module cloudmask GenerateCloudShadowMask --safeDir=/working/data/S2A_MSIL1C_20240505T110621_N0510_R137_T30UXD_20240505T131002.SAFE --local-scheduler
+```
+
+Assuming you have a downloaded and unzipped SAFE folder to feed it should run through to generating a cloud mask using s2 cloudless and then use that to try and generate a cloud mask using python FMask. The full command can be as follows;
+
+```bash
+PYTHONPATH='.' luigi --module cloudmask GenerateCloudShadowMask
+    --safeDir=${PATH_TO_SAFE_DIR}
+    --stateFolder=${PATH_TO_STATE_FOLDER}
+    --tempFolder=${PATH_TO_TEMP_FOLDER}
+    --outputFolder=${PATH_TO_OUTPUT_FOLDER}
+    --cloudDetectorThreshold=0.4
+    --cloudDetectorAverageOver=4
+    --cloudDetectorDilationSize=2
+    --cloudDetectorAllBands=False
+    --local-scheduler
+```
+
+The `cloudDetector` arguments are the current default parameters and allow us to tweak the S2 Cloudless process.
