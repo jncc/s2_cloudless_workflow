@@ -26,6 +26,8 @@ RUN pip install .
 
 RUN pip install scipy~=1.13.1
 
+RUN conda install --yes -c conda-forge rasterio
+
 FROM prerequirements AS software
 
 WORKDIR /working/software
@@ -36,6 +38,14 @@ RUN pip install .
 # HOTFIX
 RUN sed -i "s|osr.UseExceptions()|#osr.UseExceptions()|g" /opt/miniconda/lib/python3.12/site-packages/fmask/sen2meta.py
 
+RUN pip install s2cloudless~=1.7.2
+
 RUN mkdir /working/data
+
+FROM software AS workflow
+
+RUN conda install --yes -c conda-forge luigi
+
+COPY ./workflows /working/software/workflows
 
 WORKDIR /working
