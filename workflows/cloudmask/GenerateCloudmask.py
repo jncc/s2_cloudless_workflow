@@ -1,5 +1,5 @@
 from cloudmask.PrepareInputs import PrepareInputs
-from cloudmask.cloudmasking.cloudmask import generateCloudMask
+from cloudmask.cloudmasking import generateCloudMask
 from luigi import LocalTarget
 from luigi.util import requires
 from s2cloudless import S2PixelCloudDetector

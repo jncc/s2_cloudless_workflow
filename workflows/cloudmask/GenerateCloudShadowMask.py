@@ -10,6 +10,7 @@ from cloudmask.GenerateCloudmask import GenerateCloudmask
 from luigi import LocalTarget
 from luigi.util import requires
 from fmask.cmdline.sentinel2Stacked import readTopLevelMeta
+from osgeo import gdal
 
 log = logging.getLogger('luigi-interface')
 
@@ -35,13 +36,20 @@ class GenerateCloudShadowMask(luigi.Task):
         topMeta = readTopLevelMeta(fmaskArgs)
 
         interimCloudmask = run_pyfmask_shadow_masking(
-                input['intermediateFiles']['stackedTOARef'],
+                input['intermediateFiles']['stackedTOA'],
                 #inputSatImage,
                 input['intermediateFiles']['anglesFile'],
                 input['cloud']['mask'],
                 self.tempFolder,
                 topMeta.scaleVal
             )
+        
+        gdal.Translate(
+            outputImage, 
+            interimCloudmask, 
+            options=gdal.TranslateOptions(
+                format='GTiff'
+            ))
 
         output = {
             'intermediateFiles': {
@@ -53,7 +61,7 @@ class GenerateCloudShadowMask(luigi.Task):
                 'mask': input['cloud']['mask'],
                 'probability': '',
                 'shadow': {
-                    'mask': interimCloudmask
+                    'mask': outputImage
                 }
             }        
         }
