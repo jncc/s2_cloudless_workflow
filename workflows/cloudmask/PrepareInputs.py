@@ -4,7 +4,7 @@ import luigi
 import os
 
 from cloudmask.CheckInputs import CheckInputs
-from cloudmask.operations.sen2 import generateStackedImageAndAnglesFile, generateTOAReflectance
+from cloudmask.operations.sen2 import generateStackedImageAndAnglesFile, generateTOAReflectanceDN
 from luigi import LocalTarget
 from luigi.util import requires
 
@@ -24,7 +24,7 @@ class PrepareInputs(luigi.Task):
             input = json.load(i)
 
         (stackedTOA, anglesFile) = generateStackedImageAndAnglesFile(self.safeDir, self.tempFolder, self.pixelSize, log)
-        stackedTOAReflectance = generateTOAReflectance(stackedTOA, self.safeDir, self.tempFolder, log)
+        stackedTOAReflectance = generateTOAReflectanceDN(stackedTOA, self.safeDir, self.tempFolder, log)
 
         output = {
             "intermediateFiles": {

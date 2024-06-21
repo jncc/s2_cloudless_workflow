@@ -1,60 +1,65 @@
+import logging
 import os
 
 import fmask.config
 import fmask.fmask
 
-def run_pyfmask_shadow_masking(
-    sen2_toa_img,
-    #sen2_sat_img,
-    sen2_view_angles_img,
-    cloud_msk_img,
-    tmp_base_dir,
-    toa_img_scale_factor
+def runPyFmaskShadowMasking(
+    stackedTOA:str,
+    #saturatedPixelMask,
+    viewAngles:str,
+    cloudMask:str,
+    tempDir:str,
+    scaleFactor:float,
+    log:logging.Logger 
 ):
-    """
+    """Generates a cloud shadow mask from a supplied raster cloud mask using FMask
 
-    :param sen2_toa_img:
-    :param sen2_sat_img:
-    :param sen2_view_angles_img:
-    :param cloud_msk_img:
-    :param tmp_base_dir:
-    :param toa_img_scale_factor:
+    Args:
+        stackedTOA (str): Path to stacked TOA Sentinel 2 image
+        viewAngles (str): Path to sun view angles generated from input SAFE dir
+        cloudMask (str): Path to cloud mask image (raster 0/1)
+        tempDir (str): Path to temporary directory to store intermediate products
+        scaleFactor (float): TOA scale factor to reflectance DN units
+        log (logging.Logger): Central logger to use
 
+    Returns:
+        str: Path to output cloud shadow mask image
     """
     anglesInfo = fmask.config.AnglesFileInfo(
-        sen2_view_angles_img,
+        viewAngles,
         3,
-        sen2_view_angles_img,
+        viewAngles,
         2,
-        sen2_view_angles_img,
+        viewAngles,
         1,
-        sen2_view_angles_img,
+        viewAngles,
         0,
     )
 
-    tmp_base_name = os.path.splitext(os.path.basename(sen2_toa_img))[0]
+    tmp_base_name = os.path.splitext(os.path.basename(stackedTOA))[0]
 
     fmaskCloudsImg = os.path.join(
-        tmp_base_dir, "{}_pyfmask_clouds_result.tif".format(tmp_base_name)
+        tempDir, "{}_pyfmask_clouds_result.tif".format(tmp_base_name)
     )
     fmaskFilenames = fmask.config.FmaskFilenames()
-    fmaskFilenames.setTOAReflectanceFile(sen2_toa_img)
-    #fmaskFilenames.setSaturationMask(sen2_sat_img)
+    fmaskFilenames.setTOAReflectanceFile(stackedTOA)
+    #fmaskFilenames.setSaturationMask(saturatedPixelMask)
     fmaskFilenames.setOutputCloudMaskFile(fmaskCloudsImg)
 
     fmaskConfig = fmask.config.FmaskConfig(fmask.config.FMASK_SENTINEL2)
     fmaskConfig.setAnglesInfo(anglesInfo)
     fmaskConfig.setKeepIntermediates(True)
     fmaskConfig.setVerbose(True)
-    fmaskConfig.setTempDir(tmp_base_dir)
-    fmaskConfig.setTOARefScaling(float(toa_img_scale_factor))
+    fmaskConfig.setTempDir(tempDir)
+    fmaskConfig.setTOARefScaling(float(scaleFactor))
     fmaskConfig.setMinCloudSize(8)
     fmaskConfig.setCloudBufferSize(10)
     fmaskConfig.setShadowBufferSize(10)
 
     missingThermal = True
 
-    print("Cloud layer, pass 1")
+    log.info("Cloud layer, pass 1")
     (
         pass1file,
         Twater,
@@ -66,28 +71,28 @@ def run_pyfmask_shadow_masking(
         fmaskFilenames, fmaskConfig, missingThermal
     )
 
-    print("Potential shadows")
+    log.info("Potential shadows")
     potentialShadowsFile = fmask.fmask.doPotentialShadows(
         fmaskFilenames, fmaskConfig, NIR_17
     )
 
-    print("Clumping clouds")
-    (clumps, numClumps) = fmask.fmask.clumpClouds(cloud_msk_img)
+    log.info("Clumping clouds")
+    (clumps, numClumps) = fmask.fmask.clumpClouds(cloudMask)
 
-    print("Making 3d clouds")
+    log.info("Making 3d clouds")
     (cloudShape, cloudBaseTemp, cloudClumpNdx) = fmask.fmask.make3Dclouds(
         fmaskFilenames, fmaskConfig, clumps, numClumps, missingThermal
     )
 
-    print("Making cloud shadow shapes")
+    log.info("Making cloud shadow shapes")
     shadowShapesDict = fmask.fmask.makeCloudShadowShapes(
         fmaskFilenames, fmaskConfig, cloudShape, cloudClumpNdx
     )
 
-    print("Matching shadows")
+    log.info("Matching shadows")
     interimShadowmask = fmask.fmask.matchShadows(
         fmaskConfig,
-        cloud_msk_img,
+        cloudMask,
         potentialShadowsFile,
         shadowShapesDict,
         cloudBaseTemp,

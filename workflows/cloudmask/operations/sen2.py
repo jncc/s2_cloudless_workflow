@@ -41,7 +41,7 @@ def generateStackedImageAndAnglesFile(safeDir:str, outDir: str, pixelSize: int, 
    
     return (fmaskArgs.toa, anglesFile)
 
-def generateTOAReflectance(stackedTOA:str, safeDir:str, outDir:str, log:logging.Logger):
+def generateTOAReflectanceDN(stackedTOA:str, safeDir:str, outDir:str, log:logging.Logger):
     """Generates a Top Of Atmosphere Reflectance image from a stacked input 
     image and a SAFE dir of that image
 
@@ -52,11 +52,9 @@ def generateTOAReflectance(stackedTOA:str, safeDir:str, outDir:str, log:logging.
 
     Returns:
         NDArray[floating[_32Bit]]: Numpy Array of stacked input TOA image 
-        transformed into reflectance values according to its metadata            
+        transformed into reflectance DN values according to its metadata            
     """
-    log.info(f'Generating TOA Reflectance from stacked input file: {stackedTOA}')
-    
-    log.info(f'Converting to reflectance using input metadata from SAFE directory')    
+    log.info(f'Generating TOA Reflectance DB from stacked input file: {stackedTOA}')
 
     fmaskArgs = argparse.Namespace(
         safedir = safeDir,

@@ -4,7 +4,7 @@ import logging
 import luigi
 import os
 
-from cloudmask.cloud_shadow_mask import run_pyfmask_shadow_masking
+from cloudmask.cloud_shadow_mask import runPyFmaskShadowMasking
 from cloudmask.GenerateCloudmask import GenerateCloudmask
 
 from luigi import LocalTarget
@@ -26,7 +26,7 @@ class GenerateCloudShadowMask(luigi.Task):
             input = json.load(i)
 
         basename = os.path.basename(self.safeDir)[:-5]  
-        outputImage = os.path.join(self.outputFolder, f'{basename}_fmask_cloudmask.tif')
+        outputImage = os.path.join(self.outputFolder, f'{basename}_mask_fmask_cloudshadow.tif')
 
         fmaskArgs = argparse.Namespace(
             safedir = self.safeDir,
@@ -35,13 +35,14 @@ class GenerateCloudShadowMask(luigi.Task):
         )
         topMeta = readTopLevelMeta(fmaskArgs)
 
-        interimCloudmask = run_pyfmask_shadow_masking(
+        interimCloudmask = runPyFmaskShadowMasking(
                 input['intermediateFiles']['stackedTOA'],
                 #inputSatImage,
                 input['intermediateFiles']['anglesFile'],
                 input['cloud']['mask'],
                 self.tempFolder,
-                topMeta.scaleVal
+                topMeta.scaleVal,
+                log
             )
         
         gdal.Translate(
