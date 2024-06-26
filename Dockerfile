@@ -1,14 +1,14 @@
 FROM ubuntu:22.04 AS base
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
-ENV PATH /opt/miniconda/bin:$PATH
+ENV PATH=/opt/miniconda/bin:$PATH
 
 RUN apt update --fix-missing && \
     apt install -y wget bzip2 ca-certificates curl git binutils vim make build-essential && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
 
-FROM base as prerequirements
+FROM base AS prerequirements
 
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/miniconda && \
@@ -47,5 +47,6 @@ FROM software AS workflow
 RUN conda install --yes -c conda-forge luigi
 
 COPY ./workflows /working/software/workflows
+RUN cp /working/software/workflows/luigi.cfg.template /working/software/workflows/luigi.cfg
 
 WORKDIR /working

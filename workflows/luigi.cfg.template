@@ -1,44 +1,44 @@
 [CheckInputs]
-stateFolder = /workflow/state
-tempFolder = /workflow/temp
-outputFolder = /workflow/output
+stateFolder = /working/data/state
+tempFolder = /working/data/temp
+outputFolder = /working/data/output
 
 [PrepareInputs]
-stateFolder = /workflow/state
-tempFolder = /workflow/temp
-outputFolder = /workflow/output
+stateFolder = /working/data/state
+tempFolder = /working/data/temp
+outputFolder = /working/data/output
 
 [GenerateCloudmask]
-stateFolder = /workflow/state
-tempFolder = /workflow/temp
-outputFolder = /workflow/output
+stateFolder = /working/data/state
+tempFolder = /working/data/temp
+outputFolder = /working/data/output
 cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
 
 [GenerateCloudShadowMask]
-stateFolder = /workflow/state
-tempFolder = /workflow/temp
-outputFolder = /workflow/output
+stateFolder = /working/data/state
+tempFolder = /working/data/temp
+outputFolder = /working/data/output
 cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
 
 [MergeOutputMasks]
-stateFolder = /workflow/state
-tempFolder = /workflow/temp
-outputFolder = /workflow/output
+stateFolder = /working/data/state
+tempFolder = /working/data/temp
+outputFolder = /working/data/output
 cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
 
 [ReprojectFiles]
-stateFolder = /workflow/state
-tempFolder = /workflow/temp
-outputFolder = /workflow/output
+stateFolder = /working/data/state
+tempFolder = /working/data/temp
+outputFolder = /working/data/output
 cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
@@ -47,9 +47,9 @@ reproject=True
 reprojectionEPSG=EPSG:27700
 
 [GenerateMetadata]
-stateFolder = /workflow/state
-tempFolder = /workflow/temp
-outputFolder = /workflow/output
+stateFolder = /working/data/state
+tempFolder = /working/data/temp
+outputFolder = /working/data/output
 cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
@@ -58,9 +58,9 @@ reproject=True
 reprojectionEPSG=EPSG:27700
 
 [RunQualityChecks]
-stateFolder = /workflow/state
-tempFolder = /workflow/temp
-outputFolder = /workflow/output
+stateFolder = /working/data/state
+tempFolder = /working/data/temp
+outputFolder = /working/data/output
 cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
@@ -69,9 +69,9 @@ reproject=True
 reprojectionEPSG=EPSG:27700
 
 [CleanupTemporaryFiles]
-stateFolder = /workflow/state
-tempFolder = /workflow/temp
-outputFolder = /workflow/output
+stateFolder = /working/data/state
+tempFolder = /working/data/temp
+outputFolder = /working/data/output
 cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
