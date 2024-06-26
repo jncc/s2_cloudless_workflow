@@ -21,12 +21,14 @@ class GenerateCloudShadowMask(luigi.Task):
     outputFolder = luigi.Parameter()
     safeDir = luigi.Parameter()
 
+    keepIntermediates = luigi.BoolParameter(default=False)
+
     def run(self):
         with self.input().open('r') as i:
             input = json.load(i)
 
         basename = os.path.basename(self.safeDir)[:-5]  
-        outputImage = os.path.join(self.outputFolder, f'{basename}_mask_fmask_cloudshadow.tif')
+        outputImage = os.path.join(self.tempFolder, f'{basename}_mask_fmask_cloudshadow.tif')
 
         fmaskArgs = argparse.Namespace(
             safedir = self.safeDir,
@@ -39,32 +41,20 @@ class GenerateCloudShadowMask(luigi.Task):
                 input['intermediateFiles']['stackedTOA'],
                 #inputSatImage,
                 input['intermediateFiles']['anglesFile'],
-                input['cloud']['mask'],
+                input['intermediateFiles']['cloudMask'],
                 self.tempFolder,
                 topMeta.scaleVal,
                 log
             )
         
-        gdal.Translate(
-            outputImage, 
-            interimCloudmask, 
-            options=gdal.TranslateOptions(
-                format='GTiff'
-            ))
-
         output = {
             'intermediateFiles': {
                 'anglesFile': input['intermediateFiles']['anglesFile'],
                 'stackedTOA': input['intermediateFiles']['stackedTOA'],
                 'stackedTOARef': input['intermediateFiles']['stackedTOARef'],
-            },
-            'cloud': {
-                'mask': input['cloud']['mask'],
-                'probability': '',
-                'shadow': {
-                    'mask': outputImage
-                }
-            }        
+                'cloudMask': input['intermediateFiles']['cloudMask'],
+                'cloudShadowMask': interimCloudmask
+            }   
         }
 
         with self.output().open('w') as o:

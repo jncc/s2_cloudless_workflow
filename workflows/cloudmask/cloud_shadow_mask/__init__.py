@@ -1,8 +1,11 @@
 import logging
 import os
-
 import fmask.config
 import fmask.fmask
+import tempfile
+
+from osgeo import gdal
+from osgeo_utils import gdal_calc
 
 def runPyFmaskShadowMasking(
     stackedTOA:str,
@@ -11,7 +14,8 @@ def runPyFmaskShadowMasking(
     cloudMask:str,
     tempDir:str,
     scaleFactor:float,
-    log:logging.Logger 
+    log:logging.Logger,
+    keepIntermediates:bool=False
 ):
     """Generates a cloud shadow mask from a supplied raster cloud mask using FMask
 
@@ -49,7 +53,7 @@ def runPyFmaskShadowMasking(
 
     fmaskConfig = fmask.config.FmaskConfig(fmask.config.FMASK_SENTINEL2)
     fmaskConfig.setAnglesInfo(anglesInfo)
-    fmaskConfig.setKeepIntermediates(True)
+    fmaskConfig.setKeepIntermediates(keepIntermediates)
     fmaskConfig.setVerbose(True)
     fmaskConfig.setTempDir(tempDir)
     fmaskConfig.setTOARefScaling(float(scaleFactor))
@@ -101,4 +105,9 @@ def runPyFmaskShadowMasking(
         pass1file,
     )
 
-    return interimShadowmask
+    log.info("Pushing cloud shadow mask values to 2, to match standard")
+    shiftedMask = tempfile.mktemp(prefix='matchedshadows', dir=fmaskConfig.tempDir, 
+                                        suffix=fmaskConfig.defaultExtension)
+    gdal_calc.Calc(calc='A*2', outfile=shiftedMask, A=interimShadowmask)
+
+    return shiftedMask

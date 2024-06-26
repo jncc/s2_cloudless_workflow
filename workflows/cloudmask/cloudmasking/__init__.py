@@ -5,14 +5,13 @@ import numpy
 import rasterio
 import os
 
-def generateCloudMask(safeDir: str, stackedTOARef: str, tmpDir: str, outputDir: str, logger:logging.Logger, threshold=0.6, average_over=4, dilation_size=2, all_bands=False):
+def generateCloudMask(safeDir: str, stackedTOARef: str, outputDir: str, logger:logging.Logger, threshold=0.6, average_over=4, dilation_size=2, all_bands=False):
     """Generates a cloudmask using S2 Cloudless, given an input safe directory
 
     Args:
         safeDir (str): Path to input SAFE directory, must be unzipped
         stackedTOARef (str): Path to a single stacked raster file of TOA Reflectance converted to DN
-        tmpDir (str): Path to a tempory directory used to store intermediate files
-        outputDir (str): Path to an output directory to store finished files
+        outputDir (str): Path to an output directory to store files
         threshold (float, optional): Cloud detection threshold value passed to S2 Cloudless. Defaults to 0.6.
         average_over (int, optional): Cloud detection average_over value passed to S2 Cloudless. Defaults to 4.
         dilation_size (int, optional): Cloud detection dilation_size value passed to S2 Cloudless. Defaults to 2.

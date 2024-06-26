@@ -17,7 +17,7 @@ class PrepareInputs(luigi.Task):
     outputFolder = luigi.Parameter()
     safeDir = luigi.Parameter()
 
-    pixelSize = luigi.IntParameter(default=20)
+    pixelSize = luigi.IntParameter(default=10)
 
     def run(self):
         with self.input().open('r') as i:

@@ -30,17 +30,14 @@ class GenerateCloudmask(luigi.Task):
 
         stackedTOARef = input['intermediateFiles']['stackedTOARef']
 
-        cloudmask = generateCloudMask(self.safeDir, stackedTOARef, self.tempFolder, self.outputFolder, log, threshold=self.cloudDetectorThreshold, average_over=self.cloudDetectorAverageOver, dilation_size=self.cloudDetectorDilationSize, all_bands=self.cloudDetectorAllBands)
+        cloudmask = generateCloudMask(self.safeDir, stackedTOARef, self.tempFolder, log, threshold=self.cloudDetectorThreshold, average_over=self.cloudDetectorAverageOver, dilation_size=self.cloudDetectorDilationSize, all_bands=self.cloudDetectorAllBands)
 
         output = {
             'intermediateFiles': {
                 'anglesFile': input['intermediateFiles']['anglesFile'],
                 'stackedTOA': input['intermediateFiles']['stackedTOA'],
                 'stackedTOARef': input['intermediateFiles']['stackedTOARef'],
-            },
-            'cloud': {
-                'mask': cloudmask,
-                'probability': ''
+                'cloudMask': cloudmask
             }
         }
 
