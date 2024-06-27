@@ -22,16 +22,20 @@ class CleanupTemporaryFiles(luigi.Task):
         
         with self.input().open('r') as i:
             input = json.load(i)
-
-        if not self.keepIntermediates:
-            for key in input['intermediateFiles']:
-                os.unlink(input['intermediateFiles'][key])
-        
+       
         if not self.keepLooseFiles:
             for path in os.listdir(self.tempFolder):
-                os.unlink(os.path.join(self.tempFolder, path))
+                if not os.path.join(self.tempFolder, path) in input['intermediateFiles'].values():
+                    os.unlink(os.path.join(self.tempFolder, path))
+        
+        if not self.keepIntermediates:
+            for key in input['intermediateFiles']:
+                try:
+                    os.unlink(input['intermediateFiles'][key])
+                except FileNotFoundError:
+                    log.warning(f'File for {key} - "{input['intermediateFiles'][key]}" was not found, maybe deleted outside of workflow?')
+            del input['intermediateFiles']
 
-        del input['intermediateFiles']
         output = input
 
         with self.output().open('w') as o:
