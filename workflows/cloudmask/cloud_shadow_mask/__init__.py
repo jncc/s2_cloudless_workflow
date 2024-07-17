@@ -105,9 +105,9 @@ def runPyFmaskShadowMasking(
         pass1file,
     )
 
-    log.info("Pushing cloud shadow mask values to 2, to match standard")
-    shiftedMask = tempfile.mktemp(prefix='matchedshadows', dir=fmaskConfig.tempDir, 
-                                        suffix=fmaskConfig.defaultExtension)
-    gdal_calc.Calc(calc='A*2', outfile=shiftedMask, A=interimShadowmask)
+    # log.info("Pushing cloud shadow mask values to 2, to match standard")
+    # shiftedMask = tempfile.mktemp(prefix='matchedshadows', dir=fmaskConfig.tempDir, 
+    #                                     suffix=fmaskConfig.defaultExtension)
+    # gdal_calc.Calc(calc='A*2', outfile=shiftedMask, A=interimShadowmask)
 
-    return shiftedMask
+    return interimShadowmask

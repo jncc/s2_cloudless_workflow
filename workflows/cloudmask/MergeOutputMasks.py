@@ -5,7 +5,7 @@ import os
 import rasterio
 import rasterio.merge
 
-from cloudmask.GenerateCloudShadowMask import GenerateCloudShadowMask
+from cloudmask.BufferMasks import BufferMasks
 
 from luigi import LocalTarget
 from luigi.util import requires
@@ -14,7 +14,7 @@ from osgeo_utils import gdal_merge
 
 log = logging.getLogger('luigi-interface')
 
-@requires(GenerateCloudShadowMask)
+@requires(BufferMasks)
 class MergeOutputMasks(luigi.Task):
     stateFolder = luigi.Parameter()
     tempFolder = luigi.Parameter()
@@ -38,7 +38,7 @@ class MergeOutputMasks(luigi.Task):
                 driver = 'GTiff'
             )
 
-        (merged, transform) = rasterio.merge.merge([input['intermediateFiles']['cloudShadowMask'], input['intermediateFiles']['cloudMask']], nodata=0)
+        (merged, transform) = rasterio.merge.merge([input['intermediateFiles']['buffered']['cloud'], input['intermediateFiles']['buffered']['shadow']], nodata=0)
 
         with rasterio.open(outputImage, 'w', **profile) as dst:
             dst.write(merged.astype(rasterio.uint8))
@@ -53,7 +53,7 @@ class MergeOutputMasks(luigi.Task):
             json.dump(output, o, indent=4)
 
     def input(self):
-        infile = os.path.join(self.stateFolder, 'GenerateCloudShadowMask.json')
+        infile = os.path.join(self.stateFolder, 'BufferMasks.json')
         return LocalTarget(infile)
 
     def output(self):
