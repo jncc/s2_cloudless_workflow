@@ -4,10 +4,11 @@ import luigi
 import os
 
 from cloudmask.MergeOutputMasks import MergeOutputMasks
+from cloudmask.operations.reprojection import getEPSGCodeFromProjection, getReprojectedBoundingBox, getBoundBoxPinnedToGrid
 
 from luigi import LocalTarget
 from luigi.util import requires
-from osgeo import gdal
+from osgeo import gdal, osr
 from pathlib import Path
 
 log = logging.getLogger('luigi-interface')
@@ -30,9 +31,28 @@ class ReprojectFiles(luigi.Task):
 
         if self.reproject and self.reprojectionEPSG:
             log.info(f'Reprojecting output files to {self.reprojectionEPSG}, output will be stored at {outputFilePath}')
+            
+            sourceFile = gdal.Open(input['outputs']['combinedCloudAndShadowMask'], gdal.GA_ReadOnly)
+            (xUpperLeft, xResolution, xSkew, yUpperLeft, ySkew, yResolution) = sourceFile.GetGeoTransform()
+            xLowerRight = xUpperLeft + (sourceFile.RasterXSize * xResolution)
+            yLowerRight = yUpperLeft + (sourceFile.RasterYSize * yResolution)
+
+            inputProjection = osr.SpatialReference(sourceFile.GetProjection())
+            
+            code = int(self.reprojectionEPSG)
+            outputProjection = osr.SpatialReference()
+            outputProjection.ImportFromEPSG(code)
+
+            (xMin, yMin, xMax, yMax) = getReprojectedBoundingBox(min(xUpperLeft, xLowerRight), min(yUpperLeft, yLowerRight), max(xUpperLeft, xLowerRight), max(yUpperLeft, yLowerRight), inputProjection, outputProjection)
+            (xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax) = getBoundBoxPinnedToGrid(xMin, yMin, xMax, yMax, xResolution, yResolution)
+
             warpOpt = gdal.WarpOptions(
                 format='GTiff',
-                dstSRS=self.reprojectionEPSG
+                dstSRS=f'EPSG:{self.reprojectionEPSG}',
+                dstNodata=0,
+                xRes=xResolution,
+                yRes=yResolution,
+                outputBounds=(xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax)
             )
             gdal.Warp(outputFilePath, input['outputs']['combinedCloudAndShadowMask'], options=warpOpt)
         elif self.reproject and not self.reprojectionEPSG:

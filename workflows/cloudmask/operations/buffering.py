@@ -1,5 +1,5 @@
 import os
-from osgeo import gdal,ogr
+from osgeo import gdal,gdalconst,ogr
 from pathlib import Path
 
 def getBounds(datasource):
@@ -61,10 +61,10 @@ def bufferData(vector, tempFolder, layerName, fieldName, fieldValue=1, outputFie
     return (outputVector, outputLayerName, outputFieldName)
 
 def rasterizeData(inputVector, inputLayerName, inputAttributeName, originalSource, tempFolder, basename, type):
-    inputDatasource = ogr.Open(inputVector, gdal.gdalconst.GA_ReadOnly)
+    inputDatasource = ogr.Open(inputVector, gdalconst.GA_ReadOnly)
     inputLayer = inputDatasource.GetLayer(inputLayerName)
 
-    originalDatasource = gdal.Open(originalSource, gdal.gdalconst.GA_ReadOnly)
+    originalDatasource = gdal.Open(originalSource, gdalconst.GA_ReadOnly)
     originalGeoTransform = originalDatasource.GetGeoTransform()
     originalXRes = originalDatasource.RasterXSize
     originalYRes = originalDatasource.RasterYSize
@@ -73,6 +73,7 @@ def rasterizeData(inputVector, inputLayerName, inputAttributeName, originalSourc
     outputDriver = gdal.GetDriverByName('GTiff')
     outputDatasource = outputDriver.Create(outputPath, originalXRes, originalYRes, 1 ,gdal.GDT_Byte)
     outputDatasource.SetGeoTransform(originalGeoTransform)
+    outputDatasource.SetProjection(originalDatasource.GetProjection())
     outputBand = outputDatasource.GetRasterBand(1)
     outputNoDataValue = 0
     
