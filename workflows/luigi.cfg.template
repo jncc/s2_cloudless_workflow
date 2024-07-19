@@ -26,6 +26,17 @@ cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
 
+[BufferMasks]
+stateFolder = /working/data/state
+tempFolder = /working/data/temp
+outputFolder = /working/data/output
+cloudDetectorThreshold = 0.4
+cloudDetectorAverageOver = 4
+cloudDetectorDilationSize = 2
+cloudDetectorAllBands = False
+bufferData=True
+bufferDist=100
+
 [MergeOutputMasks]
 stateFolder = /working/data/state
 tempFolder = /working/data/temp
@@ -34,6 +45,8 @@ cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
+bufferData=True
+bufferDist=100
 
 [ReprojectFiles]
 stateFolder = /working/data/state
@@ -43,8 +56,10 @@ cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
+bufferData=True
+bufferDist=100
 reproject=True
-reprojectionEPSG=EPSG:27700
+reprojectionEPSG=27700
 
 [GenerateMetadata]
 stateFolder = /working/data/state
@@ -54,8 +69,10 @@ cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
+bufferData=True
+bufferDist=100
 reproject=True
-reprojectionEPSG=EPSG:27700
+reprojectionEPSG=27700
 
 [RunQualityChecks]
 stateFolder = /working/data/state
@@ -65,8 +82,10 @@ cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
+bufferData=True
+bufferDist=100
 reproject=True
-reprojectionEPSG=EPSG:27700
+reprojectionEPSG=27700
 
 [CleanupTemporaryFiles]
 stateFolder = /working/data/state
@@ -76,5 +95,7 @@ cloudDetectorThreshold = 0.4
 cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
+bufferData=True
+bufferDist=100
 reproject=True
-reprojectionEPSG=EPSG:27700
+reprojectionEPSG=27700

@@ -19,7 +19,7 @@ class BufferMasks(luigi.Task):
     outputFolder = luigi.Parameter()
     safeDir = luigi.Parameter()
 
-    bufferData = luigi.BoolParameter()
+    bufferData = luigi.BoolParameter(default=True)
     bufferDistance = luigi.IntParameter(default=100)
 
     def run(self):

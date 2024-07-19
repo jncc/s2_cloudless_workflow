@@ -25,6 +25,10 @@ class ReprojectFiles(luigi.Task):
     def run(self):
         with self.input().open('r') as i:
             input = json.load(i)
+
+        output = input
+        output['outputs'] = {}
+
         log.info(self.outputFolder)
         outputFilename = f'{Path(self.safeDir).stem}_osgb_clouds.tif'
         outputFilePath = os.path.join(self.outputFolder, outputFilename)
@@ -32,7 +36,7 @@ class ReprojectFiles(luigi.Task):
         if self.reproject and self.reprojectionEPSG:
             log.info(f'Reprojecting output files to {self.reprojectionEPSG}, output will be stored at {outputFilePath}')
             
-            sourceFile = gdal.Open(input['outputs']['combinedCloudAndShadowMask'], gdal.GA_ReadOnly)
+            sourceFile = gdal.Open(input['intermediateFiles']['combinedCloudAndShadowMask'], gdal.GA_ReadOnly)
             (xUpperLeft, xResolution, xSkew, yUpperLeft, ySkew, yResolution) = sourceFile.GetGeoTransform()
             xLowerRight = xUpperLeft + (sourceFile.RasterXSize * xResolution)
             yLowerRight = yUpperLeft + (sourceFile.RasterYSize * yResolution)
@@ -54,15 +58,14 @@ class ReprojectFiles(luigi.Task):
                 yRes=yResolution,
                 outputBounds=(xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax)
             )
-            gdal.Warp(outputFilePath, input['outputs']['combinedCloudAndShadowMask'], options=warpOpt)
+            gdal.Warp(outputFilePath, input['intermediateFiles']['combinedCloudAndShadowMask'], options=warpOpt)
+            output['outputs']['reprojectedCombinedCloudAndShadowMask'] = outputFilePath
         elif self.reproject and not self.reprojectionEPSG:
             log.error(f'No EPSG code supplied, but reprojection requested')
             return RuntimeError(f'No EPSG code supplied, but reprojection requested')
         else:
             log.info('No reprojection requested')
-
-        output = input
-        output['outputs']['reprojectedCombinedCloudAndShadowMask'] = outputFilePath
+            output['outputs']['combinedCloudAndShadowMask'] = input['intermediateFiles']['combinedCloudAndShadowMask']
 
         with self.output().open('w') as o:
             json.dump(output, o, indent=4)
