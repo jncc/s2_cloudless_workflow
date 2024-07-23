@@ -26,7 +26,7 @@ RUN pip install .
 
 RUN pip install scipy~=1.13.1
 
-RUN conda install --yes -c conda-forge rasterio
+RUN conda install --yes -c conda-forge rasterio=1.3.10
 
 FROM prerequirements AS software
 
