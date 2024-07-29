@@ -17,7 +17,7 @@ class GenerateCloudmask(luigi.Task):
     stateFolder = luigi.Parameter()
     tempFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
-    safeDir = luigi.Parameter()
+    inputPath = luigi.Parameter()
 
     cloudDetectorThreshold = luigi.FloatParameter(default=0.4)
     cloudDetectorAverageOver = luigi.IntParameter(default=4)
@@ -27,19 +27,13 @@ class GenerateCloudmask(luigi.Task):
     def run(self):
         with self.input().open('r') as i:
             input = json.load(i)
+            output = input
 
         stackedTOARef = input['intermediateFiles']['stackedTOARef']
 
-        cloudmask = generateCloudMask(self.safeDir, stackedTOARef, self.tempFolder, log, threshold=self.cloudDetectorThreshold, average_over=self.cloudDetectorAverageOver, dilation_size=self.cloudDetectorDilationSize, all_bands=self.cloudDetectorAllBands)
+        cloudmask = generateCloudMask(input['inputs']['safeDir'], stackedTOARef, self.tempFolder, log, threshold=self.cloudDetectorThreshold, average_over=self.cloudDetectorAverageOver, dilation_size=self.cloudDetectorDilationSize, all_bands=self.cloudDetectorAllBands)
 
-        output = {
-            'intermediateFiles': {
-                'anglesFile': input['intermediateFiles']['anglesFile'],
-                'stackedTOA': input['intermediateFiles']['stackedTOA'],
-                'stackedTOARef': input['intermediateFiles']['stackedTOARef'],
-                'cloudMask': cloudmask
-            }
-        }
+        output['intermediateFiles']['cloudMask'] = cloudmask
 
         with self.output().open('w') as o:
             json.dump(output, o, indent=4)

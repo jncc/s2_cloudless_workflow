@@ -17,7 +17,7 @@ class BufferMasks(luigi.Task):
     stateFolder = luigi.Parameter()
     tempFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
-    safeDir = luigi.Parameter()
+    inputPath = luigi.Parameter()
 
     bufferData = luigi.BoolParameter(default=True)
     bufferDistance = luigi.IntParameter(default=100)
@@ -29,7 +29,7 @@ class BufferMasks(luigi.Task):
 
         if bufferData:
             log.info('Buffering cloud and cloud shadow masks')
-            basename = Path(self.safeDir).stem
+            basename = Path(input['inputs']['safeDir']).stem
             output['intermediateFiles']['buffered'] = {}
 
             log.info(f'Polygonize cloud layer - {input['intermediateFiles']['cloudMask']}')

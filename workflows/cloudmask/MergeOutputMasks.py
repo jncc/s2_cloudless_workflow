@@ -19,7 +19,7 @@ class MergeOutputMasks(luigi.Task):
     stateFolder = luigi.Parameter()
     tempFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
-    safeDir = luigi.Parameter()
+    inputPath = luigi.Parameter()
 
     bufferData = luigi.BoolParameter(default=True)
     keepIntermediates = luigi.BoolParameter(default=False)
@@ -28,7 +28,7 @@ class MergeOutputMasks(luigi.Task):
         with self.input().open('r') as i:
             input = json.load(i)
         
-        basename = os.path.basename(self.safeDir)[:-5]  
+        basename = os.path.basename(input['inputs']['safeDir'])[:-5]  
         outputImageStem = os.path.join(self.outputFolder, f'{basename}_clouds')
 
         inputCloud = input['intermediateFiles']['cloudMask']
@@ -47,9 +47,7 @@ class MergeOutputMasks(luigi.Task):
         gdal.Translate(f'{outputImageStem}.tif', f'{outputImageStem}.vrt', options=translateOptions)
 
         output = input
-        output['intermediateFiles'] = {
-            'combinedCloudAndShadowMask': f'{outputImageStem}.tif'
-        }
+        output['intermediateFiles']['combinedCloudAndShadowMask'] = f'{outputImageStem}.tif'
 
         with self.output().open('w') as o:
             json.dump(output, o, indent=4)

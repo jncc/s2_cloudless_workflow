@@ -17,7 +17,7 @@ log = logging.getLogger('luigi-interface')
 class ReprojectFiles(luigi.Task):
     stateFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
-    safeDir = luigi.Parameter()
+    inputPath = luigi.Parameter()
 
     reproject = luigi.BoolParameter(default=False)
     reprojectionEPSG = luigi.Parameter(default='')
@@ -30,7 +30,7 @@ class ReprojectFiles(luigi.Task):
         output['outputs'] = {}
 
         log.info(self.outputFolder)
-        outputFilename = f'{Path(self.safeDir).stem}_osgb_clouds.tif'
+        outputFilename = f'{Path(input['inputs']['safeDir']).stem}_osgb_clouds.tif'
         outputFilePath = os.path.join(self.outputFolder, outputFilename)
 
         if self.reproject and self.reprojectionEPSG:

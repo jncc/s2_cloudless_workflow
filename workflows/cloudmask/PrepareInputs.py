@@ -15,7 +15,7 @@ class PrepareInputs(luigi.Task):
     stateFolder = luigi.Parameter()
     tempFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
-    safeDir = luigi.Parameter()
+    inputPath = luigi.Parameter()
 
     pixelSize = luigi.IntParameter(default=10)
 
@@ -23,10 +23,10 @@ class PrepareInputs(luigi.Task):
         with self.input().open('r') as i:
             input = json.load(i)
 
-        (stackedTOA, anglesFile) = generateStackedImageAndAnglesFile(self.safeDir, self.tempFolder, self.pixelSize, log)
-        stackedTOAReflectance = generateTOAReflectanceDN(stackedTOA, self.safeDir, self.tempFolder, log)
+        (stackedTOA, anglesFile) = generateStackedImageAndAnglesFile(input['inputs']['safeDir'], self.tempFolder, self.pixelSize, log)
+        stackedTOAReflectance = generateTOAReflectanceDN(stackedTOA, input['inputs']['safeDir'], self.tempFolder, log)
 
-        output = {
+        output = input | {
             "intermediateFiles": {
                 "anglesFile": anglesFile,
                 "stackedTOA": stackedTOA,

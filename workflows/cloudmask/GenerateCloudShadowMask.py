@@ -19,19 +19,20 @@ class GenerateCloudShadowMask(luigi.Task):
     stateFolder = luigi.Parameter()
     tempFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
-    safeDir = luigi.Parameter()
+    inputPath = luigi.Parameter()
 
     keepIntermediates = luigi.BoolParameter(default=False)
 
     def run(self):
         with self.input().open('r') as i:
             input = json.load(i)
+            output = input
 
-        basename = os.path.basename(self.safeDir)[:-5]  
+        basename = os.path.basename(input['inputs']['safeDir'])[:-5]  
         outputImage = os.path.join(self.tempFolder, f'{basename}_mask_fmask_cloudshadow.tif')
 
         fmaskArgs = argparse.Namespace(
-            safedir = self.safeDir,
+            safedir = input['inputs']['safeDir'],
             tmpdir = self.tempFolder,
             verbose = True
         )
@@ -47,15 +48,7 @@ class GenerateCloudShadowMask(luigi.Task):
                 log
             )
         
-        output = {
-            'intermediateFiles': {
-                'anglesFile': input['intermediateFiles']['anglesFile'],
-                'stackedTOA': input['intermediateFiles']['stackedTOA'],
-                'stackedTOARef': input['intermediateFiles']['stackedTOARef'],
-                'cloudMask': input['intermediateFiles']['cloudMask'],
-                'cloudShadowMask': interimCloudmask
-            }   
-        }
+        output['intermediateFiles']['cloudShadowMask'] = interimCloudmask
 
         with self.output().open('w') as o:
             json.dump(output, o, indent=4)
