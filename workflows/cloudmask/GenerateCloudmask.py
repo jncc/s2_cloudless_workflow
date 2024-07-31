@@ -19,7 +19,7 @@ class GenerateCloudmask(luigi.Task):
     outputFolder = luigi.Parameter()
     inputPath = luigi.Parameter()
 
-    cloudDetectorThreshold = luigi.FloatParameter(default=0.4)
+    cloudDetectorThreshold = luigi.FloatParameter(default=0.6)
     cloudDetectorAverageOver = luigi.IntParameter(default=4)
     cloudDetectorDilationSize = luigi.IntParameter(default=2)
     cloudDetectorAllBands = luigi.BoolParameter(default=False)
