@@ -16,12 +16,12 @@ PYTHONPATH='.' luigi --module cloudmask CleanupTemporaryFiles
     --stateFolder=${PATH_TO_STATE_FOLDER}
     --tempFolder=${PATH_TO_TEMP_FOLDER}
     --outputFolder=${PATH_TO_OUTPUT_FOLDER}
-    --cloudDetectorThreshold=0.4
+    --cloudDetectorThreshold=0.6
     --cloudDetectorAverageOver=4
     --cloudDetectorDilationSize=2
     --cloudDetectorAllBands=False
     --reproject=True
-    --reprojectionEPSG=EPSG:27700
+    --reprojectionEPSG=27700
     --keepIntermediates
     --keepInputPath
     --local-scheduler
@@ -30,7 +30,7 @@ PYTHONPATH='.' luigi --module cloudmask CleanupTemporaryFiles
 The `cloudDetector` arguments are the current default parameters and allow us to tweak the S2 Cloudless process, used in the `GenerateCloudmask` step.
 
 ```bash
-    --cloudDetectorThreshold=0.4
+    --cloudDetectorThreshold=0.6
     --cloudDetectorAverageOver=4
     --cloudDetectorDilationSize=2
     --cloudDetectorAllBands=False
@@ -40,7 +40,7 @@ The `reproject` arguments control if the final output is reprojected and what EP
 
 ```bash
     --reproject=True
-    --reprojectionEPSG=EPSG:27700
+    --reprojectionEPSG=27700
 ```
 
 The `keep` arguments control if the temporary folder is cleared out after processing, setting the `keepIntermediates` flag to `True` (default: `False`) will clear the temporary files directory including the following named files; 
