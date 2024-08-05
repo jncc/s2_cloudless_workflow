@@ -35,7 +35,7 @@ cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
 bufferData=True
-bufferDist=100
+bufferDistance=100
 
 [MergeOutputMasks]
 stateFolder = /working/data/state
@@ -46,7 +46,7 @@ cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
 bufferData=True
-bufferDist=100
+bufferDistance=100
 
 [ReprojectFiles]
 stateFolder = /working/data/state
@@ -57,7 +57,7 @@ cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
 bufferData=True
-bufferDist=100
+bufferDistance=100
 reproject=True
 reprojectionEPSG=27700
 
@@ -70,7 +70,7 @@ cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
 bufferData=True
-bufferDist=100
+bufferDistance=100
 reproject=True
 reprojectionEPSG=27700
 
@@ -83,7 +83,7 @@ cloudDetectorAverageOver = 4
 cloudDetectorDilationSize = 2
 cloudDetectorAllBands = False
 bufferData=True
-bufferDist=100
+bufferDistance=100
 reproject=True
 reprojectionEPSG=27700
 
@@ -98,6 +98,6 @@ cloudDetectorAllBands = False
 keepIntermediates=False
 keepInputFiles=False
 bufferData=True
-bufferDist=100
+bufferDistance=100
 reproject=True
 reprojectionEPSG=27700

@@ -20,10 +20,12 @@ PYTHONPATH='.' luigi --module cloudmask CleanupTemporaryFiles
     --cloudDetectorAverageOver=4
     --cloudDetectorDilationSize=2
     --cloudDetectorAllBands=False
+    --bufferData=True
+    --bufferDistance=100
     --reproject=True
     --reprojectionEPSG=27700
     --keepIntermediates
-    --keepInputPath
+    --keepInputFiles
     --local-scheduler
 ```
 
