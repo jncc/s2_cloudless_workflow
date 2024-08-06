@@ -38,7 +38,7 @@ class BufferMasks(luigi.Task):
             (bufferedDataPath, bufferedDataLayerName, bufferedDataLayerField) = bufferData(polygonizedDataPath, self.tempFolder, 'cloud', 'cloud', fieldValue=1, outputFieldValue=1, bufferDist=100)
             output['intermediateFiles']['buffered']['cloud'] = rasterizeData(bufferedDataPath, bufferedDataLayerName, bufferedDataLayerField, input['intermediateFiles']['stackedTOA'], self.tempFolder, basename, 'cloud')
                
-            log.info(f'Polygonize cloud layer - {input['intermediateFiles']['cloudShadowMask']}')
+            log.info(f'Polygonize cloud shadow layer - {input['intermediateFiles']['cloudShadowMask']}')
             polygonizedDataPath = polygonizeData(self.tempFolder, basename, 'shadow', input['intermediateFiles']['cloudShadowMask'])
             log.info(f'Buffer Polygonized layer - {polygonizedDataPath}')
             (bufferedDataPath, bufferedDataLayerName, bufferedDataLayerField) = bufferData(polygonizedDataPath, self.tempFolder, 'shadow', 'shadow', fieldValue=1, outputFieldValue=2, bufferDist=100)

@@ -86,13 +86,11 @@ def refDNtoUnits(refDN, scaleVal, offsetDict):
     refUnits = numpy.zeros(refDN.shape, dtype=numpy.float32)
     numBands = refDN.shape[0]
 
-    print(offsetDict)
     for bandNdx in range(numBands):
         offset = 0
 
         if bandNdx in offsetDict:
             offset = offsetDict[bandNdx]
-        print(offset)
         refUnits[bandNdx] = singleRefDNtoUnits(refDN[bandNdx], scaleVal, offset)
     return refUnits
 
@@ -131,6 +129,9 @@ def generateTOAReflectanceDN(stackedTOA:str, safeDir:str, outDir:str, log:loggin
     topMeta = fmask.cmdline.sentinel2Stacked.readTopLevelMeta(fmaskArgs)
     offsetDict = makeRefOffsetDict(topMeta)
     
+    log.info(f'Generating new stack with Quantification value - {topMeta.scaleVal}')
+    log.info(f'Using per band offsets - {offsetDict}')
+
     with rasterio.open(stackedTOA, 'r') as ds:
         arr = ds.read().astype(numpy.float32)
         profile = ds.profile
