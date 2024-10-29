@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import glob
+import shutil
 
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -21,7 +22,7 @@ def get_filename_without_extensions(file_path):
 
     return file.name
 
-def get_ard_file_for_esa_product_name(ard_dir, esa_name):
+def get_ard_files_for_esa_product_name(ard_dir, esa_name):
     satellite = esa_name[0:3]
     date = esa_name[11:19]
     orbit = esa_name[34:37]
@@ -31,6 +32,48 @@ def get_ard_file_for_esa_product_name(ard_dir, esa_name):
     ard_files = glob.glob(pattern, recursive=True)
 
     return ard_files
+
+def get_all_esa_splits(esa_product, esa_products):
+    product_basename = esa_product[0:44]
+    esa_splits = list(filter(lambda x: x.startswith(product_basename), esa_products))
+    
+    return esa_splits
+
+def get_matching_split(product, esa_product_names, matching_ard_files):
+    esa_splits = get_all_esa_splits(product, esa_product_names)
+
+    if len(esa_splits) > len(matching_ard_files):
+        raise Exception(f"Can't match split granules - there are more ESA splits than ARD splits")
+
+    esa_splits_sorted = sorted(esa_splits, key=lambda y: y[44:-1]) # sort by processing time
+    ard_products_sorted = sorted(matching_ard_files, reverse=True)
+
+    matching_split = ""
+    for i, split in enumerate(esa_splits_sorted):
+        if esa_splits_sorted[i] == product:
+            matching_split = ard_products_sorted[i]
+            break
+
+    return matching_split
+
+def create_output_files(esa_ard_mappings, all_files, output_dir, symlink):
+    for esa_product in esa_ard_mappings:
+        ard_file = esa_ard_mappings[esa_product]
+        logging.info(f"{esa_product} matched to {ard_file}")
+
+        src_file =  [file for file in all_files if esa_product in file][0]
+
+        dest_dir = os.path.join(output_dir,  ard_file[4:8], ard_file[8:10], ard_file[10:12])
+        os.makedirs(dest_dir, exist_ok=True)
+
+        dest_file = os.path.join(dest_dir, ard_file)
+
+        if symlink:
+            logging.info(f"Creating symlink from {dest_file} to {src_file}")
+            os.symlink(src_file, dest_file)
+        else:
+            logging.info(f"Copying file from {dest_file} to {src_file}")
+            shutil.copy(src_file, dest_file)
 
 def main(start_date, end_date, input_dir, ard_dir, output_dir, symlink):
     logging.info(f"Finding cloud masks to rename between dates {start_date} and {end_date}")
@@ -54,12 +97,23 @@ def main(start_date, end_date, input_dir, ard_dir, output_dir, symlink):
 
     logging.info(f"Found {len(esa_product_names)} ESA products")
 
-    logging.info(f"Find matching ARD products")
+    esa_ard_mappings = {}
     for product in esa_product_names:
-        matching_ard = get_ard_file_for_esa_product_name(ard_dir, product)
-        logging.info(f"Found matching {len(matching_ard)} ARD files")
-        logging.info(matching_ard)
+        logging.info(f"Find matching ARD products for {product}")
+        matching_ard_files = get_ard_files_for_esa_product_name(ard_dir, product)
+        logging.info(f"Found {len(matching_ard_files)} matching ARD files")
+        
+        if len(matching_ard_files) == 1:
+            esa_ard_mappings[product] = os.path.basename(matching_ard_files[0])
+        elif len(matching_ard_files) > 1:
+            matching_split = get_matching_split(product, esa_product_names, matching_ard_files)
 
+            logging.info(f"Found matching split {matching_split} for {product}")
+            esa_ard_mappings[product] = os.path.basename(matching_split)
+        else:
+            raise Exception(f"Couldn't find matching ARD file for {product}")
+        
+    create_output_files(esa_ard_mappings, all_files, output_dir, symlink)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Create ARD compatible cloud mask files from the S2 cloudless outputs")
