@@ -3,6 +3,7 @@ import logging
 import os
 import glob
 import shutil
+import re
 
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -75,6 +76,64 @@ def create_output_files(esa_ard_mappings, all_files, output_dir, symlink):
             logging.info(f"Copying file from {dest_file} to {src_file}")
             shutil.copy(src_file, dest_file)
 
+def get_product_version_mappings(esa_products):
+    '''
+    get mapping like
+    {
+        "S2A_MSIL1C_20200731T113331_R080_T30VVM": {
+            "0209": [
+                "S2A_MSIL1C_20200731T113331_N0209_R080_T30VVM_20200731T114957",
+                "S2A_MSIL1C_20200731T113331_N0209_R080_T30VVM_20200731T115955"
+            ],
+            "0500": [
+                "S2A_MSIL1C_20200731T113331_N0500_R080_T30VVM_20230327T001417",
+                "S2A_MSIL1C_20200731T113331_N0500_R080_T30VVM_20230414T031220"
+            ]
+        },
+        ...
+    }
+    '''
+
+    product_mappings = {}
+    for product_name in esa_products:
+        swath_name = f"{product_name[0:26]}_{product_name[33:44]}"
+        version = product_name[28:32]
+
+        if swath_name in product_mappings:
+            product_mapping = product_mappings[swath_name]
+
+            if version in product_mapping:
+                product_mapping[version].append(product_name)
+            else:
+                product_mapping[version] = [product_name]
+        else:
+            product_mappings[swath_name] = {
+                version: [product_name]
+            }
+
+    return product_mappings
+
+def get_latest_versions(esa_product_names):
+    latest_versions = set()
+    
+    product_mappings = get_product_version_mappings(esa_product_names)
+
+    for swath_name in product_mappings:
+        mapping = product_mappings[swath_name]
+
+        products = []
+        if len(mapping) == 1:
+            # only one version available
+            products = next(iter(mapping.values()))
+        else:
+            # multiple versions available, use the latest version
+            latest_version = sorted(mapping.keys(), reverse=True)[0]
+            products = mapping[latest_version]
+
+        latest_versions.update(products)
+            
+    return latest_versions
+
 def main(start_date, end_date, input_dir, ard_dir, output_dir, symlink):
     logging.info(f"Finding cloud masks to rename between dates {start_date} and {end_date}")
 
@@ -97,6 +156,8 @@ def main(start_date, end_date, input_dir, ard_dir, output_dir, symlink):
 
     logging.info(f"Found {len(esa_product_names)} ESA products")
 
+    esa_product_names = get_latest_versions(esa_product_names)
+
     esa_ard_mappings = {}
     for product in esa_product_names:
         logging.info(f"Find matching ARD products for {product}")
@@ -112,7 +173,7 @@ def main(start_date, end_date, input_dir, ard_dir, output_dir, symlink):
             esa_ard_mappings[product] = os.path.basename(matching_split)
         else:
             raise Exception(f"Couldn't find matching ARD file for {product}")
-        
+    
     create_output_files(esa_ard_mappings, all_files, output_dir, symlink)
 
 if __name__ == '__main__':
