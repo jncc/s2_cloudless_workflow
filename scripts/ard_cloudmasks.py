@@ -40,6 +40,27 @@ def get_all_esa_splits(esa_product, esa_products):
     
     return esa_splits
 
+def ard_names_have_processing_times(ard_files):
+    pattern = "S2[A-B]_[0-9]{8}_[0-9a-zA-Z]{10,}_T[0-9A-Z]{5}_ORB[0-9]{3}_[0-9]{14}"
+
+    files_with_processing_times = 0
+    for file in ard_files:
+        if re.search(pattern, file):
+            files_with_processing_times += 1
+
+    if files_with_processing_times != 0 and files_with_processing_times != len(ard_files):
+        raise Exception(f"Found a mix of new and old ARD names: {ard_files}")
+    
+    return files_with_processing_times == len(ard_files)
+
+def get_processing_time_from_ard_name(ard_file):
+    # example filepath: /path/to/file/S2B_20240619_latn527lone0008_T30UYD_ORB137_20240619120339_utm30n_osgb_clouds.tif
+
+    filename = os.path.basename(ard_file)
+    processing_time = filename.split("_")[5]
+
+    return processing_time
+
 def get_matching_split(product, esa_product_names, matching_ard_files):
     esa_splits = get_all_esa_splits(product, esa_product_names)
 
@@ -47,7 +68,12 @@ def get_matching_split(product, esa_product_names, matching_ard_files):
         raise Exception(f"Can't match split granules - there are more ESA splits than ARD splits")
 
     esa_splits_sorted = sorted(esa_splits, key=lambda y: y[44:-1]) # sort by processing time
-    ard_products_sorted = sorted(matching_ard_files, reverse=True)
+    
+    ard_products_sorted = []
+    if ard_names_have_processing_times(matching_ard_files):
+        ard_products_sorted = sorted(matching_ard_files, key=lambda y: get_processing_time_from_ard_name(y))
+    else:
+        ard_products_sorted = sorted(matching_ard_files, reverse=True)
 
     matching_split = ""
     for i, split in enumerate(esa_splits_sorted):
@@ -71,6 +97,8 @@ def create_output_files(esa_ard_mappings, all_files, output_dir, symlink):
 
         if symlink:
             logging.info(f"Creating symlink from {dest_file} to {src_file}")
+            if os.path.exists(dest_file):
+                os.remove(dest_file)
             os.symlink(src_file, dest_file)
         else:
             logging.info(f"Copying file from {dest_file} to {src_file}")
