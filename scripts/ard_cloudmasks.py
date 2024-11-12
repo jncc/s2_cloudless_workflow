@@ -4,6 +4,7 @@ import os
 import glob
 import shutil
 import re
+import csv
 
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -15,6 +16,19 @@ def get_all_date_strings(start_date, end_date):
     end = datetime.strptime(end_date, "%Y-%m-%d")
     return [(start+timedelta(days=x)).strftime("%Y%m%d") for x in range((end-start).days + 1)]
 
+def get_cloudmask_files(start_date, end_date, input_dir):
+    all_dates = get_all_date_strings(start_date, end_date)
+
+    pattern = os.path.join(input_dir, "**", "*CLOUDMASK.tif")
+    all_files = glob.glob(pattern, recursive=True)
+
+    files_in_date_range = []
+    for date in all_dates:
+        matching_files = [file for file in all_files if date in file]
+        files_in_date_range.extend(matching_files)
+
+    return files_in_date_range
+
 def get_filename_without_extensions(file_path):
     file = Path(file_path)
 
@@ -23,11 +37,19 @@ def get_filename_without_extensions(file_path):
 
     return file.name
 
-def get_ard_files_for_esa_product_name(ard_dir, esa_name):
-    satellite = esa_name[0:3]
-    date = esa_name[11:19]
-    orbit = esa_name[34:37]
-    tile = esa_name[38:44]
+def get_esa_product_names(cloudmask_files):
+    esa_product_names = set()
+    for file in cloudmask_files:
+        product_name = get_filename_without_extensions(file)
+        esa_product_names.add(product_name)
+
+    return esa_product_names
+
+def get_ard_files(esa_product_name, ard_dir):
+    satellite = esa_product_name[0:3]
+    date = esa_product_name[11:19]
+    orbit = esa_product_name[34:37]
+    tile = esa_product_name[38:44]
 
     pattern = f"{ard_dir}/**/{satellite}_{date}_*_{tile}*_ORB{orbit}_*_clouds.tif"
     ard_files = glob.glob(pattern, recursive=True)
@@ -83,26 +105,53 @@ def get_matching_split(product, esa_product_names, matching_ard_files):
 
     return matching_split
 
-def create_output_files(esa_ard_mappings, all_files, output_dir, symlink):
+def match_esa_names_to_ard_names(esa_product_names, ard_dir):
+    esa_ard_mappings = {}
+
+    for esa_name in esa_product_names:
+        logging.info(f"Find matching ARD products for {esa_name}...")
+        matching_ard_files = get_ard_files(esa_name, ard_dir)
+        logging.info(f"Found {len(matching_ard_files)} matching ARD files")
+        
+        if len(matching_ard_files) == 1:
+            esa_ard_mappings[esa_name] = os.path.basename(matching_ard_files[0])
+        elif len(matching_ard_files) > 1:
+            matching_split = get_matching_split(esa_name, esa_product_names, matching_ard_files)
+
+            logging.info(f"Found matching split {matching_split} for {esa_name}")
+            esa_ard_mappings[esa_name] = os.path.basename(matching_split)
+        else:
+            raise Exception(f"Couldn't find matching ARD file for {esa_name}")
+
+    return esa_ard_mappings
+
+def get_file_mappings(esa_ard_mappings, cloudmask_files, output_dir):
+    file_mappings = {}
+
     for esa_product in esa_ard_mappings:
-        ard_file = esa_ard_mappings[esa_product]
-        logging.info(f"{esa_product} matched to {ard_file}")
+        esa_filepath =  [filepath for filepath in cloudmask_files if esa_product in os.path.basename(filepath)][0]
 
-        src_file =  [file for file in all_files if esa_product in file][0]
+        ard_filename = esa_ard_mappings[esa_product]
+        date_dirs = os.path.join(ard_filename[4:8], ard_filename[8:10], ard_filename[10:12])
+        ard_filepath = os.path.join(output_dir, date_dirs, ard_filename)
 
-        dest_dir = os.path.join(output_dir,  ard_file[4:8], ard_file[8:10], ard_file[10:12])
-        os.makedirs(dest_dir, exist_ok=True)
+        file_mappings[esa_filepath] = ard_filepath
 
-        dest_file = os.path.join(dest_dir, ard_file)
+    return file_mappings
+
+def create_output_files(file_mappings, symlink):
+    for esa_filepath, ard_filepath in file_mappings.items():
+        ard_folder = os.path.dirname(ard_filepath)
+        os.makedirs(ard_folder, exist_ok=True)
 
         if symlink:
-            logging.info(f"Creating symlink from {dest_file} to {src_file}")
-            if os.path.exists(dest_file):
-                os.remove(dest_file)
-            os.symlink(src_file, dest_file)
+            logging.info(f"Creating symlink from {ard_filepath} to {esa_filepath}")
+            if os.path.exists(ard_filepath):
+                os.remove(ard_filepath)
+            os.symlink(esa_filepath, ard_filepath)
         else:
-            logging.info(f"Copying file from {dest_file} to {src_file}")
-            shutil.copy(src_file, dest_file)
+            logging.info(f"Copying file from {ard_filepath} to {esa_filepath}")
+            shutil.copy(esa_filepath, ard_filepath)
 
 def get_product_version_mappings(esa_products):
     '''
@@ -162,47 +211,37 @@ def get_latest_versions(esa_product_names):
             
     return latest_versions
 
-def main(start_date, end_date, input_dir, ard_dir, output_dir, symlink):
-    logging.info(f"Finding cloud masks to rename between dates {start_date} and {end_date}")
+def generate_report(file_mappings, report_file):
+    with open(report_file, "w", newline="") as file:
+        writer = csv.writer(file, quoting=csv.QUOTE_ALL)
+        writer.writerow(["Input cloudmask file", "Output cloudmask file", "Timestamp"])
 
-    all_dates = get_all_date_strings(start_date, end_date)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for old_filepath, new_filepath in file_mappings.items():
+            writer.writerow([old_filepath, new_filepath, timestamp])
 
-    pattern = os.path.join(input_dir, "**", "*CLOUDMASK.tif")
-    all_files = glob.glob(pattern, recursive=True)
+def main(start_date, end_date, input_dir, ard_dir, output_dir, symlink, report_file):
+    logging.info(f"Finding cloud mask files between dates {start_date} and {end_date}")
 
-    files_in_date_range = []
-    for date in all_dates:
-        matching_files = [file for file in all_files if date in file]
-        files_in_date_range.extend(matching_files)
+    cloudmask_files = get_cloudmask_files(start_date, end_date, input_dir)
 
-    logging.info(f"Found matching files {files_in_date_range}")
+    logging.info(f"Found {len(cloudmask_files)} cloud mask files")
 
-    esa_product_names = set()
-    for file in files_in_date_range:
-        product_name = get_filename_without_extensions(file)
-        esa_product_names.add(product_name)
+    esa_product_names = get_esa_product_names(cloudmask_files)
+    esa_product_names = get_latest_versions(esa_product_names)
 
     logging.info(f"Found {len(esa_product_names)} ESA products")
 
-    esa_product_names = get_latest_versions(esa_product_names)
+    esa_ard_mappings = match_esa_names_to_ard_names(esa_product_names, ard_dir)
+    file_mappings = get_file_mappings(esa_ard_mappings, cloudmask_files, output_dir)
 
-    esa_ard_mappings = {}
-    for product in esa_product_names:
-        logging.info(f"Find matching ARD products for {product}")
-        matching_ard_files = get_ard_files_for_esa_product_name(ard_dir, product)
-        logging.info(f"Found {len(matching_ard_files)} matching ARD files")
-        
-        if len(matching_ard_files) == 1:
-            esa_ard_mappings[product] = os.path.basename(matching_ard_files[0])
-        elif len(matching_ard_files) > 1:
-            matching_split = get_matching_split(product, esa_product_names, matching_ard_files)
+    logging.info(f"Creating {len(file_mappings)} output files...")
 
-            logging.info(f"Found matching split {matching_split} for {product}")
-            esa_ard_mappings[product] = os.path.basename(matching_split)
-        else:
-            raise Exception(f"Couldn't find matching ARD file for {product}")
-    
-    create_output_files(esa_ard_mappings, all_files, output_dir, symlink)
+    create_output_files(file_mappings, symlink)
+
+    if report_file:
+        logging.info(f"Generating CSV report at {report_file}")
+        generate_report(file_mappings, report_file)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Create ARD compatible cloud mask files from the S2 cloudless outputs")
@@ -212,7 +251,8 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--arddir', type=str, required=True, help='Path to the ARD root dir')
     parser.add_argument('-o', '--outputdir', type=str, required=True, help='Path to the output directory for the renamed files')
     parser.add_argument('-l', '--symlink', type=bool, required=False, default=False, help='Create symlinks instead of hard copies')
+    parser.add_argument('-r', '--reportfile', type=str, required=False, help='Path to report file output')
 
     args = parser.parse_args()
 
-    main(args.startdate, args.enddate, args.inputdir, args.arddir, args.outputdir, args.symlink)
+    main(args.startdate, args.enddate, args.inputdir, args.arddir, args.outputdir, args.symlink, args.reportfile)
