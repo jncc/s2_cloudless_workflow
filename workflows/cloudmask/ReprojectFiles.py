@@ -25,18 +25,20 @@ class ReprojectFiles(luigi.Task):
     def run(self):
         with self.input().open('r') as i:
             input = json.load(i)
-
-        output = input
-        output['outputs'] = {}
-
-        log.info(self.outputFolder)
-        outputFilename = f'{Path(input['inputs']['safeDir']).stem}_osgb_clouds.tif'
-        outputFilePath = os.path.join(self.outputFolder, outputFilename)
+            output = input
 
         if self.reproject and self.reprojectionEPSG:
+            # Get SAFE dir base name to create output stem and create subfolders
+            basename = Path(input['inputs']['safeDir']).with_suffix('').name
+            # Create output folder directories if required (in the form of {base}/reprojected/{year}/{month}/{day})
+            outputImagePath = Path(self.outputFolder).joinpath('reprojected', basename[11:15], basename[15:17], basename[17:19])
+            outputImagePath.mkdir(parents=True, exist_ok=True)
+
+            outputFilename = f'{Path(input['inputs']['safeDir']).stem}.EPSG_{self.reprojectionEPSG}.CLOUDMASK.tif'
+            outputFilePath = os.path.join(outputImagePath, outputFilename)
             log.info(f'Reprojecting output files to {self.reprojectionEPSG}, output will be stored at {outputFilePath}')
             
-            sourceFile = gdal.Open(input['intermediateFiles']['combinedCloudAndShadowMask'], gdal.GA_ReadOnly)
+            sourceFile = gdal.Open(input['outputs']['combinedCloudAndShadowMask'], gdal.GA_ReadOnly)
             (xUpperLeft, xResolution, xSkew, yUpperLeft, ySkew, yResolution) = sourceFile.GetGeoTransform()
             xLowerRight = xUpperLeft + (sourceFile.RasterXSize * xResolution)
             yLowerRight = yUpperLeft + (sourceFile.RasterYSize * yResolution)
@@ -58,14 +60,13 @@ class ReprojectFiles(luigi.Task):
                 yRes=yResolution,
                 outputBounds=(xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax)
             )
-            gdal.Warp(outputFilePath, input['intermediateFiles']['combinedCloudAndShadowMask'], options=warpOpt)
-            output['outputs']['reprojectedCombinedCloudAndShadowMask'] = outputFilePath
+            gdal.Warp(f'{outputFilePath}', input['outputs']['combinedCloudAndShadowMask'], options=warpOpt)
+            output['outputs']['reprojectedCombinedCloudAndShadowMask'] = f'{outputFilePath}'
         elif self.reproject and not self.reprojectionEPSG:
             log.error(f'No EPSG code supplied, but reprojection requested')
             return RuntimeError(f'No EPSG code supplied, but reprojection requested')
         else:
             log.info('No reprojection requested')
-            output['outputs']['combinedCloudAndShadowMask'] = input['intermediateFiles']['combinedCloudAndShadowMask']
 
         with self.output().open('w') as o:
             json.dump(output, o, indent=4)
