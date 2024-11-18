@@ -33,6 +33,8 @@ class PrepareWorkingDirectories(luigi.Task):
         }
 
         for product in input['productList']:
+            log.info(f'Creating processing directories for {product}')
+
             productPath = Path(product)
             productName = productPath.with_suffix('').name
 
@@ -57,6 +59,8 @@ class PrepareWorkingDirectories(luigi.Task):
                 'reprojectionEPSG': self.reprojectionEPSG,
                 'keepIntermediates': self.keepIntermediates
             })
+
+        log.info(f'Created processing directories for {len(output["toProcess"])} products.')
 
         with self.output().open('w') as o:
             json.dump(output, o, indent=4)

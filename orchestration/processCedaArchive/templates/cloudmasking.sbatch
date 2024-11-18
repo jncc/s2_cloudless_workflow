@@ -8,4 +8,4 @@
 #SBATCH -e $stateMount/%J.err
 ##SBATCH -A defra_eo_jncc_s2_cloudmask
 
-/apps/singularity/bin/singularity exec --bind $workingMount:/work --bind $stateMount:/state --bind $inputMount:/input --bind $outputMount:/output $s2CloudmaskContainer PYTHONPATH='/working/software/workflows' luigi --module cloudmask CleanupTemporaryFiles --inputPath=$inputPath --stateFolder=/state --tempFolder=/work --outputFolder=/output bufferData=$bufferData --bufferDistance=$bufferDistance --reproject=$reproject --reprojectionEPSG=$reprojectionEPSG --local-scheduler
+/apps/singularity/bin/singularity exec --bind $workingMount:/work --bind $stateMount:/state --bind $inputMount:/input --bind $outputMount:/output $s2CloudmaskContainer PYTHONPATH='/working/software/workflows' luigi --module cloudmask CleanupTemporaryFiles --inputPath=$inputPath --stateFolder=/state --tempFolder=/work --outputFolder=/output --bufferData=$bufferData --bufferDistance=$bufferDistance --reproject=$reproject --reprojectionEPSG=$reprojectionEPSG --local-scheduler

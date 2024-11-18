@@ -34,7 +34,6 @@ class SubmitJobs(luigi.Task):
 
         tasks = []
         for job in input['toProcess']:
-            log.info(job)
             sbatch = sbatchTemplate.substitute({
                 'workingMount': job['workingFolder'],
                 'stateMount': job['stateFolder'],
@@ -62,6 +61,8 @@ class SubmitJobs(luigi.Task):
             )
 
             tasks.append(task)
+
+        yield tasks
 
         with self.output().open('w') as o:
             json.dump(output, o, indent=4)
