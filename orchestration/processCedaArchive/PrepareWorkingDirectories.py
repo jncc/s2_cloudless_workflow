@@ -19,9 +19,9 @@ class PrepareWorkingDirectories(luigi.Task):
     jobStateFolder = luigi.Parameter()
 
     bufferData = luigi.BoolParameter(default=True)
-    bufferDistance = luigi.NumericalParameter(default=100)
+    bufferDistance = luigi.Parameter(default='100')
     reproject = luigi.BoolParameter(default=True)
-    reprojectEPSG = luigi.Parameter(default='27700')
+    reprojectionEPSG = luigi.Parameter(default='27700')
     keepIntermediates = luigi.BoolParameter(default=False)
 
     def run(self):
@@ -36,7 +36,7 @@ class PrepareWorkingDirectories(luigi.Task):
             productPath = Path(product)
             productName = productPath.with_suffix('').name
 
-            workingFolder = Path.joinpath(self.tempFolder, productName)
+            workingFolder = Path(self.tempFolder).joinpath(productName)
             workingFolder.mkdir()
 
             inputPath = workingFolder.joinpath(productPath.name)
@@ -47,14 +47,14 @@ class PrepareWorkingDirectories(luigi.Task):
 
             output['toProcess'].append({
                 'productName': productName,
-                'inputPath': inputPath,
+                'inputPath': str(inputPath),
                 'outputFolder': self.outputFolder,
-                'stateFolder': stateFolder,
-                'workingFolder': workingFolder,
+                'stateFolder': str(stateFolder),
+                'workingFolder': str(workingFolder),
                 'bufferData': self.bufferData,
                 'bufferDistance': self.bufferDistance,
                 'reproject': self.reproject,
-                'reprojectEPSG': self.reprojectEPSG,
+                'reprojectionEPSG': self.reprojectionEPSG,
                 'keepIntermediates': self.keepIntermediates
             })
 

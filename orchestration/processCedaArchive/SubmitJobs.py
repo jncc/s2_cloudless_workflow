@@ -8,21 +8,24 @@ from luigi.util import requires
 from pathlib import Path
 from string import Template
 
-from PrepareWorkingDirectories import PrepareWorkingDirectories
-from SubmitJob import SubmitJob
+from processCedaArchive.PrepareWorkingDirectories import PrepareWorkingDirectories
+from processCedaArchive.SubmitJob import SubmitJob
 
 log = logging.getLogger('luigi-interface')
 
 @requires(PrepareWorkingDirectories)
-class SetupWorkingDirectories(luigi.Task):
+class SubmitJobs(luigi.Task):
     stateFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
     tempFolder = luigi.Parameter()
     templateFolder = luigi.Parameter()
     templateFilename = luigi.Parameter()
+    s2CloudmaskContainer = luigi.Parameter()
+
+    testProcessing = luigi.BoolParameter(default=False)
 
     def run(self):
-        with input().open('r') as i:
+        with self.input().open('r') as i:
             input = json.load(i)
             output = input
 
@@ -31,20 +34,22 @@ class SetupWorkingDirectories(luigi.Task):
 
         tasks = []
         for job in input['toProcess']:
-            sbatch = sbatchTemplate.substitute(self.getTemplateParams({
+            log.info(job)
+            sbatch = sbatchTemplate.substitute({
                 'workingMount': job['workingFolder'],
                 'stateMount': job['stateFolder'],
                 'inputMount': str(Path(job['inputPath']).parent),
                 'outputMount': job['outputFolder'],
-                'inputPath': f'/input/{Path(job['inputPath']).name}',
+                's2CloudmaskContainer': self.s2CloudmaskContainer,
+                'inputPath': '/input/' + Path(job['inputPath']).name,
                 'bufferData': str(job['bufferData']),
                 'bufferDistance': str(job['bufferDistance']),
                 'reproject': str(job['reproject']),
-                'reprojectEPSG': str(job['reprojectEPSG']),
+                'reprojectionEPSG': str(job['reprojectionEPSG']),
                 'keepIntermediates': str(job['keepIntermediates'])
-            }))
+            })
 
-            sbatchScriptPath = Path(job['workingFolder']).joinpath(f'{job['productName']}.sbatch'),
+            sbatchScriptPath = Path(job['workingFolder']).joinpath(job['productName'] + '.sbatch')
 
             with open(sbatchScriptPath, 'w') as jobSBatch:
                 jobSBatch.write(sbatch)
