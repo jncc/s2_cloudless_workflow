@@ -14,42 +14,48 @@ log = logging.getLogger('luigi-interface')
 class PrepareWorkingDirectories(luigi.Task):
     stateFolder = luigi.Parameter()
     tempFolder = luigi.Parameter()
-    outputPath = luigi.Parameter()
-    inputPath = luigi.Parameter()
-
+    outputFolder = luigi.Parameter()
+    inputFolder = luigi.Parameter()
+    jobStateFolder = luigi.Parameter()
 
     bufferData = luigi.BoolParameter(default=True)
+    bufferDistance = luigi.NumericalParameter(default=100)
+    reproject = luigi.BoolParameter(default=True)
+    reprojectEPSG = luigi.Parameter(default='27700')
     keepIntermediates = luigi.BoolParameter(default=False)
 
     def run(self):
         with self.input().open('r') as i:
             input = json.load(i)
         
-        output = input
-        output['workingFolders'] = []
+        output = {
+            'toProcess': []
+        }
 
         for product in input['productList']:
             productPath = Path(product)
             productName = productPath.with_suffix('').name
 
-            workingDir = Path.joinpath(self.tempFolder, productName)
-            workingDir.mkdir()
+            workingFolder = Path.joinpath(self.tempFolder, productName)
+            workingFolder.mkdir()
 
-            inputPath = workingDir.joinpath(productPath.name)
+            inputPath = workingFolder.joinpath(productPath.name)
             inputPath.symlink_to(productPath)
 
-            stateDir = workingDir.joinpath('state')
-            stateDir.mkdir()
-
-            tempDir = workingDir.joinpath('temp')
-            tempDir.mkdir()
+            stateFolder = Path(self.jobStateFolder).joinpath(productPath.name)
+            stateFolder.mkdir()
 
             output['toProcess'].append({
+                'productName': productName,
                 'inputPath': inputPath,
-                'outputPath': self.outputPath,
-                'stateDir': stateDir,
-                'tempDir': tempDir,
-                'workingDir': workingDir
+                'outputFolder': self.outputFolder,
+                'stateFolder': stateFolder,
+                'workingFolder': workingFolder,
+                'bufferData': self.bufferData,
+                'bufferDistance': self.bufferDistance,
+                'reproject': self.reproject,
+                'reprojectEPSG': self.reprojectEPSG,
+                'keepIntermediates': self.keepIntermediates
             })
 
         with self.output().open('w') as o:
