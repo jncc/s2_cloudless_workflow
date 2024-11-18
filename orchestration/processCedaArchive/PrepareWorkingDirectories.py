@@ -42,7 +42,7 @@ class PrepareWorkingDirectories(luigi.Task):
             inputPath = workingFolder.joinpath(productPath.name)
             inputPath.symlink_to(productPath)
 
-            stateFolder = Path(self.jobStateFolder).joinpath(productPath.name)
+            stateFolder = Path(self.jobStateFolder).joinpath(productPath.with_suffix('').name)
             stateFolder.mkdir()
 
             output['toProcess'].append({
