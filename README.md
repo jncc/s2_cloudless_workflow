@@ -8,6 +8,12 @@ There is a container currently built off the `fmask.dockerfile` that currently s
 sudo docker run --rm -it -v ~/local/working/folder:/working/data --entrypoint bash cloudmasking:0.0.1
 ```
 
+To build to an apptainer container locally:
+
+    docker build -t jncc/cloudmasking .
+    docker save jncc/cloudmasking -o cloudmasking.tar
+    apptainer build cloudmasking.sif docker-archive://cloudmasking.tar
+
 # `cloudmask` workflow
 
 This is a luigi workflow that takes in a single Sentinel 2 SAFE directory and runs the S2 Cloudless package over the data to generate a cloudmask, this is then passed into fMask to generate a cloud shadow mask, these masks are merged into a single output (1 = cloud / 2 = cloud shadow) and then optionally reprojected. 
