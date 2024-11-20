@@ -34,17 +34,23 @@ class SubmitJobs(luigi.Task):
 
         tasks = []
         for job in input['toProcess']:
+            buffer = ''
+            reproject = ''
+
+            if job['bufferData']:
+                buffer = f'--bufferData --bufferDistance={str(job['bufferDistance'])}'
+            if job['reproject']:
+                reproject = f'--reproject --reprojectionEPSG={str(job['reprojectionEPSG'])}'
+
             sbatch = sbatchTemplate.substitute({
                 'workingMount': job['workingFolder'],
                 'stateMount': job['stateFolder'],
-                'inputMount': str(Path(job['inputPath']).parent),
+                'inputMount': job['inputFolder'],
                 'outputMount': job['outputFolder'],
                 's2CloudmaskContainer': self.s2CloudmaskContainer,
                 'inputPath': '/input/' + Path(job['inputPath']).name,
-                'bufferData': str(job['bufferData']),
-                'bufferDistance': str(job['bufferDistance']),
-                'reproject': str(job['reproject']),
-                'reprojectionEPSG': str(job['reprojectionEPSG']),
+                'buffer': buffer,
+                'reproject': reproject,
                 'keepIntermediates': str(job['keepIntermediates'])
             })
 

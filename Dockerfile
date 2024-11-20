@@ -48,5 +48,6 @@ RUN conda install --yes -c conda-forge luigi
 
 COPY ./workflows /working/software/workflows
 RUN cp /working/software/workflows/luigi.cfg.template /working/software/workflows/luigi.cfg
+RUN chmod +x /working/software/workflows/cloudmask/container/exec.sh
 
 WORKDIR /working
