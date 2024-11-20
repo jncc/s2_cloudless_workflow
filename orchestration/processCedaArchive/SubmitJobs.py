@@ -38,9 +38,9 @@ class SubmitJobs(luigi.Task):
             reproject = ''
 
             if job['bufferData']:
-                buffer = f'--bufferData --bufferDistance={str(job['bufferDistance'])}'
+                buffer = f'--bufferData --bufferDistance={str(job["bufferDistance"])}'
             if job['reproject']:
-                reproject = f'--reproject --reprojectionEPSG={str(job['reprojectionEPSG'])}'
+                reproject = f'--reproject --reprojectionEPSG={str(job["reprojectionEPSG"])}'
 
             sbatch = sbatchTemplate.substitute({
                 'workingMount': job['workingFolder'],
