@@ -13,7 +13,7 @@ productLocation = /basket
 spatialOperator = intersects
 wkt = POLYGON ((-5.30875600354019 54.6300621044781,-5.49814357463334 55.0719664370288,-6.42929913250797 55.4980884719884,-7.20263171447164 56.2240741611788,-8.71773228321681 57.4393110756931,-8.51256241453257 58.8123709661185,-2.37324865159643 60.7851581650054,-0.416840184512967 61.0131472398499,-1.50522228408618 55.9715573997213,-2.68889460341834 55.0246195442555,-4.45651193362103 54.5669329141138,-5.30875600354019 54.6300621044781))
 satelliteFilter = Sentinel-2A, Sentinel-2B
-dataMounts = ['/neodc','/datacenter']
+dataMounts = /neodc,/datacenter
 
 [SubmitJobs]
 stateFolder = /state
@@ -23,4 +23,4 @@ wkt = POLYGON ((-5.30875600354019 54.6300621044781,-5.49814357463334 55.07196643
 satelliteFilter = Sentinel-2A, Sentinel-2B
 templateFolder = ./processCedaArchive/templates
 templateFilename = cloudmasking.sbatch
-dataMounts = ['/neodc','/datacenter']
+dataMounts = /neodc,/datacenter
