@@ -33,6 +33,7 @@ class SubmitJobs(luigi.Task):
             sbatchTemplate = Template(templateSBatch.read())
 
         tasks = []
+
         for job in input['toProcess']:
             buffer = ''
             reproject = ''
@@ -75,6 +76,7 @@ class SubmitJobs(luigi.Task):
 
     def input(self):
         infile = os.path.join(self.stateFolder, 'PrepareWorkingDirectories.json')
+        log.error(infile)
         return LocalTarget(infile)
 
     def output(self):
