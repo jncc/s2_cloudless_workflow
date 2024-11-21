@@ -17,6 +17,7 @@ class PrepareWorkingDirectories(luigi.Task):
     outputFolder = luigi.Parameter()
     inputFolder = luigi.Parameter()
     jobStateFolder = luigi.Parameter()
+    dataMounts = luigi.Parameter(default='')
 
     bufferData = luigi.BoolParameter(default=True)
     bufferDistance = luigi.Parameter(default='100')
@@ -54,6 +55,7 @@ class PrepareWorkingDirectories(luigi.Task):
                 'outputFolder': self.outputFolder,
                 'stateFolder': str(stateFolder),
                 'workingFolder': str(workingFolder),
+                'dataMounts': self.dataMounts,
                 'bufferData': self.bufferData,
                 'bufferDistance': self.bufferDistance,
                 'reproject': self.reproject,

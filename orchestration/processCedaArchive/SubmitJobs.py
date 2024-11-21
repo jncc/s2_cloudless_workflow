@@ -37,13 +37,18 @@ class SubmitJobs(luigi.Task):
         for job in input['toProcess']:
             buffer = ''
             reproject = ''
+            dataMounts = ''
 
             if job['bufferData']:
                 buffer = f'--bufferData --bufferDistance={str(job["bufferDistance"])}'
             if job['reproject']:
                 reproject = f'--reproject --reprojectionEPSG={str(job["reprojectionEPSG"])}'
+            if job['dataMounts']:
+                for mount in job['dataMounts'].split(','):
+                    dataMounts = f'{dataMounts} --bind {mount}:{mount}'
 
             sbatch = sbatchTemplate.substitute({
+                'dataMounts': dataMounts,
                 'workingMount': job['workingFolder'],
                 'stateMount': job['stateFolder'],
                 'inputMount': job['inputFolder'],
