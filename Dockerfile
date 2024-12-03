@@ -17,6 +17,8 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     echo ". /opt/miniconda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     echo "conda activate base" >> ~/.bashrc
 
+RUN conda install --yes --solver=classic conda-forge::conda-libmamba-solver conda-forge::libmamba conda-forge::libmambapy conda-forge::libarchive
+
 RUN conda install --yes -c conda-forge python=3.12 gdal=3.9 && conda update --yes -n base conda
 
 WORKDIR /working/software
