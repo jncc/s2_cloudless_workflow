@@ -19,7 +19,8 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     echo ". /working/software/miniconda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     echo "conda activate base" >> ~/.bashrc
 
-RUN conda install --yes --solver=classic conda-forge::conda-libmamba-solver conda-forge::libmamba conda-forge::libmambapy conda-forge::libarchive python=3.12 gdal=3.9 && conda update --yes -n base conda
+RUN conda install --yes --solver=classic conda-forge::conda-libmamba-solver conda-forge::libmamba conda-forge::libmambapy conda-forge::libarchive
+RUN conda install --yes -c conda-forge python=3.12 gdal=3.9 && conda update --yes -n base conda
 
 WORKDIR /working/software
 RUN  git clone --depth 1 --branch rios-1.4.17 https://github.com/ubarsc/rios.git
@@ -33,7 +34,7 @@ RUN conda install --yes -c conda-forge rasterio=1.3.10
 FROM prerequirements AS software
 
 WORKDIR /working/software
-RUN git clone --depth 1 --branch pythonfmask-0.5.9 https://github.com/ubarsc/python-fmask.git
+RUN git clone --depth 1 --branch pythonfmask-0.5.10 https://github.com/ubarsc/python-fmask.git
 WORKDIR /working/software/python-fmask
 RUN pip install .
 
