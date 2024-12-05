@@ -53,12 +53,13 @@ class ReprojectFiles(luigi.Task):
             (xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax) = getBoundBoxPinnedToGrid(xMin, yMin, xMax, yMax, xResolution, yResolution)
 
             warpOpt = gdal.WarpOptions(
-                format='GTiff',
+                format='COG',
                 dstSRS=f'EPSG:{self.reprojectionEPSG}',
                 dstNodata=0,
                 xRes=xResolution,
                 yRes=yResolution,
-                outputBounds=(xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax)
+                outputBounds=(xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax), 
+                creationOptions=['COMPRESS=LZW']
             )
             gdal.Warp(f'{outputFilePath}', input['outputs']['combinedCloudAndShadowMask'], options=warpOpt)
             output['outputs']['reprojectedCombinedCloudAndShadowMask'] = f'{outputFilePath}'

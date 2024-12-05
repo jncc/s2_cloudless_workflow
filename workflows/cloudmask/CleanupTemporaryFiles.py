@@ -19,6 +19,7 @@ class CleanupTemporaryFiles(luigi.Task):
 
     keepIntermediates = luigi.BoolParameter(default=False)
     keepInputFiles = luigi.BoolParameter(default=False)
+    deleteTempFolder = luigi.BoolParameter(default=True)
 
     def run(self):
         
@@ -45,6 +46,8 @@ class CleanupTemporaryFiles(luigi.Task):
                     shutil.rmtree(os.path.join(self.tempFolder, path))
                 else:
                     os.unlink(os.path.join(self.tempFolder, path))
+            if self.deleteTempFolder:
+                shutil.rmtree(self.tempFolder)
 
         output = input
 
