@@ -38,7 +38,7 @@ WORKDIR /working/software/python-fmask
 RUN pip install .
 
 # HOTFIX
-#RUN sed -i "s|osr.UseExceptions()|#osr.UseExceptions()|g" /working/software/miniconda/lib/python3.12/site-packages/fmask/sen2meta.py
+#RUN sed -i "s|osr.UseExceptions()|#osr.UseExceptions()|g" /working/software/miniforge/lib/python3.12/site-packages/fmask/sen2meta.py
 
 RUN pip install s2cloudless~=1.7.2
 
