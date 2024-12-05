@@ -7,5 +7,4 @@
 #SBATCH -e $stateMount/%J.err
 ##SBATCH -A defra_eo_jncc_s2_cloudmask
 
-module load jaspy
 /usr/bin/singularity exec --cleanenv $dataMounts --bind $workingMount:/work --bind $stateMount:/state --bind $inputMount:/input --bind $outputMount:/output $s2CloudmaskContainer /working/software/workflows/cloudmask/container/exec.sh --module cloudmask CleanupTemporaryFiles --inputPath=$inputPath --stateFolder=/state --tempFolder=/work --outputFolder=/output $buffer $reproject --local-scheduler
