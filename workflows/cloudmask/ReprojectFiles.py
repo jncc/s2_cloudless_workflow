@@ -5,6 +5,7 @@ import os
 
 from cloudmask.MergeOutputMasks import MergeOutputMasks
 from cloudmask.operations.reprojection import getEPSGCodeFromProjection, getReprojectedBoundingBox, getBoundBoxPinnedToGrid
+from cloudmask.Defaults import VERSION
 
 from luigi import LocalTarget
 from luigi.util import requires
@@ -31,7 +32,7 @@ class ReprojectFiles(luigi.Task):
             # Get SAFE dir base name to create output stem and create subfolders
             basename = Path(input['inputs']['safeDir']).with_suffix('').name
             # Create output folder directories if required (in the form of {base}/reprojected/{year}/{month}/{day})
-            outputImagePath = Path(self.outputFolder).joinpath('reprojected', f'epsg_{self.reprojectionEPSG}', basename[11:15], basename[15:17], basename[17:19])
+            outputImagePath = Path(self.outputFolder).joinpath(VERSION).joinpath('reprojected', f'epsg_{self.reprojectionEPSG}', basename[11:15], basename[15:17], basename[17:19])
             outputImagePath.mkdir(parents=True, exist_ok=True)
 
             outputFilename = f'{Path(input['inputs']['safeDir']).stem}.EPSG_{self.reprojectionEPSG}.CLOUDMASK.tif'

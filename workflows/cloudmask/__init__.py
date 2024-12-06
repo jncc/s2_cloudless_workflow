@@ -1,4 +1,5 @@
 import cloudmask.CheckInputs
+import cloudmask.Defaults
 import cloudmask.PrepareInputs
 import cloudmask.GenerateCloudmask
 import cloudmask.GenerateCloudShadowMask
