@@ -3,14 +3,13 @@ import luigi
 import json
 import os
 
-from ceda_ard_finder import SearchForProducts
+from processCedaArchive.GetInputProducts import GetRawProductsFromFilters, GetRawProductsFromTextFileList
 from luigi import LocalTarget
 from luigi.util import requires
 from pathlib import Path
 
 log = logging.getLogger('luigi-interface')
 
-@requires(SearchForProducts)
 class PrepareWorkingDirectories(luigi.Task):
     stateFolder = luigi.Parameter()
     tempFolder = luigi.Parameter()
@@ -24,6 +23,32 @@ class PrepareWorkingDirectories(luigi.Task):
     reproject = luigi.BoolParameter(default=True)
     reprojectionEPSG = luigi.Parameter(default='27700')
     keepIntermediates = luigi.BoolParameter(default=False)
+
+    # Ceda Ard Finder Params. Set them to None if not used
+    startDate = luigi.OptionalParameter(default=None)
+    endDate = luigi.OptionalParameter(default=None)
+    ardFilter = luigi.OptionalParameter(default="")
+    spatialOperator = luigi.OptionalParameter(default=None)
+    satelliteFilter = luigi.OptionalParameter(default=None)
+
+    useInputList = luigi.BoolParameter(default=False)
+
+    orbit = luigi.IntParameter(default=-9999)
+    orbitDirection = luigi.Parameter(default='')
+    wkt = luigi.Parameter(default='')    
+
+    def requires(self):
+        if self.useInputList:
+            if Path(self.inputFolder).joinpath('inputs.txt').exists():
+                return self.clone(GetRawProductsFromTextFileList)
+            else:
+                raise ValueError(f'Product Input list {self.productInputList} does not exist')
+        else:
+            # First check that the parameters are set correctly
+            for k in ['startDate', 'endDate', 'ardFilter', 'spatialOperator', 'satelliteFilter']:
+                if self.param_kwargs.get(k) is None:
+                    raise ValueError(f'Parameter {k} is not set')
+            return self.clone(GetRawProductsFromFilters)
 
     def run(self):
         with self.input().open('r') as i:
@@ -69,7 +94,7 @@ class PrepareWorkingDirectories(luigi.Task):
             json.dump(output, o, indent=4)
 
     def input(self):
-        infile = os.path.join(self.stateFolder, 'SearchForProducts.json')
+        infile = os.path.join(self.stateFolder, 'GetInputProducts.json')
         return LocalTarget(infile)
 
     def output(self):

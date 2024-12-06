@@ -1,2 +1,3 @@
 luigi==3.0.3
-ceda_ard_finder @ git+https://github.com/jncc/ceda_ard_finder@v0.0.1
+ceda_ard_finder @ git+https://github.com/jncc/ceda_ard_finder.git@v0.0.2
+pyfunctional==1.5.0

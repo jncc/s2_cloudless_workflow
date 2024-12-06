@@ -1,3 +1,4 @@
+import processCedaArchive.GetInputProducts
 import processCedaArchive.PrepareWorkingDirectories
 import processCedaArchive.SubmitJobs
-#import processCedaArchive.SubmitJob
+import processCedaArchive.SubmitJob
