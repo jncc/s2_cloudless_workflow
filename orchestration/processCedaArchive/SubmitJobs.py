@@ -39,7 +39,7 @@ class SubmitJobs(luigi.Task):
             buffer = ''
             reproject = ''
             dataMounts = ''
-            cleanupWorkingFolderCommand = ''
+            postRunCommands = ''
 
             if job['bufferData']:
                 buffer = f'--bufferData --bufferDistance={str(job["bufferDistance"])}'
@@ -49,7 +49,7 @@ class SubmitJobs(luigi.Task):
                 for mount in job['dataMounts'].split(','):
                     dataMounts = f'{dataMounts} --bind {mount}:{mount}'
             if self.cleanupWorkingFolders:
-                cleanupWorkingFolderCommand = f'rm -r {job["workingFolder"]}'
+                postRunCommands = f'rm -r {job["workingFolder"]}'
 
             sbatch = sbatchTemplate.substitute({
                 'dataMounts': dataMounts,
