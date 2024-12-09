@@ -23,6 +23,7 @@ class SubmitJobs(luigi.Task):
     s2CloudmaskContainer = luigi.Parameter()
 
     testProcessing = luigi.BoolParameter(default=False)
+    cleanupWorkingFolders = luigi.BoolParameter(default=True)
 
     def run(self):
         with self.input().open('r') as i:
@@ -38,6 +39,7 @@ class SubmitJobs(luigi.Task):
             buffer = ''
             reproject = ''
             dataMounts = ''
+            cleanupWorkingFolderCommand = ''
 
             if job['bufferData']:
                 buffer = f'--bufferData --bufferDistance={str(job["bufferDistance"])}'
@@ -46,6 +48,8 @@ class SubmitJobs(luigi.Task):
             if job['dataMounts']:
                 for mount in job['dataMounts'].split(','):
                     dataMounts = f'{dataMounts} --bind {mount}:{mount}'
+            if self.cleanupWorkingFolders:
+                cleanupWorkingFolderCommand = f'rm -r {job["workingFolder"]}'
 
             sbatch = sbatchTemplate.substitute({
                 'dataMounts': dataMounts,
@@ -57,7 +61,8 @@ class SubmitJobs(luigi.Task):
                 'inputPath': '/input/' + Path(job['inputPath']).name,
                 'buffer': buffer,
                 'reproject': reproject,
-                'keepIntermediates': str(job['keepIntermediates'])
+                'keepIntermediates': str(job['keepIntermediates']),
+                'postRunCommands': cleanupWorkingFolderCommand
             })
 
             sbatchScriptPath = Path(job['workingFolder']).joinpath(job['productName'] + '.sbatch')
