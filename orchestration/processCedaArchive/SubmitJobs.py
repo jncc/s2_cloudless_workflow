@@ -62,7 +62,7 @@ class SubmitJobs(luigi.Task):
                 'buffer': buffer,
                 'reproject': reproject,
                 'keepIntermediates': str(job['keepIntermediates']),
-                'postRunCommands': cleanupWorkingFolderCommand
+                'postRunCommands': postRunCommands
             })
 
             sbatchScriptPath = Path(job['workingFolder']).joinpath(job['productName'] + '.sbatch')
