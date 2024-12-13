@@ -1,3 +1,4 @@
+import glob
 import logging
 import luigi
 import json
@@ -44,6 +45,7 @@ class CompareToOnDiskArchive(luigi.Task):
         output = {
             'stats': {},
             'matchedGroups': {},
+            'fuzzyMatched': {},
             'unmatchedGroups': {}
         }
 
@@ -60,7 +62,7 @@ class CompareToOnDiskArchive(luigi.Task):
 
                     for product in sortedProducts:
                         path = self.getPotentialDataPath(product)
-                        print(path.joinpath(f'{product}.zip'))
+
                         if path.joinpath(f'{product}.zip').exists():
                             matched.append(product)
                         else:
@@ -72,6 +74,16 @@ class CompareToOnDiskArchive(luigi.Task):
                             'unmatched': unmatched
                         }
                     else:
+                        ## Attempt to find the group on disk and return the most recently reprocessed version
+                        potentialMatches = [match[:-4] for match in glob.glob(f'{sensor}_{captureDate}_*_{grid}_*.zip', root_dir=self.getPotentialDataPath(f'{sensor}_{captureDate}'))]
+
+                        if len(potentialMatches) >= 1:
+                            output['fuzzyMatched'] = {
+                                'potentialMatch': potentialMatches,
+                                'unmatched': list(set(unmatched) - set(potentialMatches))
+                            }
+
+
                         output['unmatchedGroups'][f'{sensor}_{captureDate}_{grid}'] = {
                             'unmatched': unmatched
                         }
