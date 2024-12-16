@@ -75,7 +75,7 @@ class CompareToOnDiskArchive(luigi.Task):
                         }
                     else:
                         ## Attempt to find the group on disk and return the most recently reprocessed version
-                        potentialMatches = [match[:-4] for match in glob.glob(f'{sensor}_{captureDate}_*_{grid}_*.zip', root_dir=self.getPotentialDataPath(f'{sensor}_{captureDate}'))]
+                        potentialMatches = [match[:-4] for match in glob.glob(f'{sensor}_MSIL1C_{captureDate}_*_{grid}_*.zip', root_dir=self.getPotentialDataPath(f'{sensor}_{captureDate}'))]
 
                         if len(potentialMatches) >= 1:
                             output['fuzzyMatched'] = {
