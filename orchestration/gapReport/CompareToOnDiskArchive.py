@@ -78,15 +78,14 @@ class CompareToOnDiskArchive(luigi.Task):
                         potentialMatches = [match[:-4] for match in glob.glob(f'{sensor}_MSIL1C_{captureDate}_*_{grid}_*.zip', root_dir=self.getPotentialDataPath(f'{sensor}_MSIL1C_{captureDate}'))]
 
                         if len(potentialMatches) >= 1:
-                            output['fuzzyMatched'] = {
+                            output['fuzzyMatched'][f'{sensor}_{captureDate}_{grid}'] = {
                                 'potentialMatch': potentialMatches,
                                 'unmatched': list(set(unmatched) - set(potentialMatches))
                             }
-
-
-                        output['unmatchedGroups'][f'{sensor}_{captureDate}_{grid}'] = {
-                            'unmatched': unmatched
-                        }
+                        else:
+                            output['unmatchedGroups'][f'{sensor}_{captureDate}_{grid}'] = {
+                                'unmatched': unmatched
+                            }
 
         output['stats'] = {
             'totalGroups': totalGroups, 
