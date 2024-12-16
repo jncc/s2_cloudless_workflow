@@ -58,6 +58,7 @@ class CompareToOnDiskArchive(luigi.Task):
                     sortedProducts = sorted(input['groups'][sensor][captureDate][grid])
                     
                     matched = []
+                    matchedOnTape = []
                     unmatched = []
 
                     for product in sortedProducts:
@@ -65,21 +66,26 @@ class CompareToOnDiskArchive(luigi.Task):
 
                         if path.joinpath(f'{product}.zip').exists():
                             matched.append(product)
+                        elif path.joinpath(f'{product}.manifest').exists():
+                            matchedOnTape.append(product)
                         else:
                             unmatched.append(product)
                     
-                    if len(matched) >= 1:
+                    if len(matched) >= 1 or len(matchedOnTape) >= 1:
                         output['matchedGroups'][f'{sensor}_{captureDate}_{grid}'] = {
                             'matched': matched,
+                            'matchedOnTape': matchedOnTape,
                             'unmatched': unmatched
                         }
                     else:
                         ## Attempt to find the group on disk and return the most recently reprocessed version
                         potentialMatches = [match[:-4] for match in glob.glob(f'{sensor}_MSIL1C_{captureDate}_*_{grid}_*.zip', root_dir=self.getPotentialDataPath(f'{sensor}_MSIL1C_{captureDate}'))]
+                        potentialMatchesOnTape = [match[:-9] for match in glob.glob(f'{sensor}_MSIL1C_{captureDate}_*_{grid}_*.manifest', root_dir=self.getPotentialDataPath(f'{sensor}_MSIL1C_{captureDate}'))]
 
-                        if len(potentialMatches) >= 1:
+                        if len(potentialMatches) >= 1 or len(potentialMatchesOnTape) >= 1:
                             output['fuzzyMatched'][f'{sensor}_{captureDate}_{grid}'] = {
                                 'potentialMatch': potentialMatches,
+                                'potentialMatchOnTape': potentialMatchesOnTape,
                                 'unmatched': list(set(unmatched) - set(potentialMatches))
                             }
                         else:
