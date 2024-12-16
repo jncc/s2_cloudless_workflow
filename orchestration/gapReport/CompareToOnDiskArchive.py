@@ -89,6 +89,7 @@ class CompareToOnDiskArchive(luigi.Task):
 
         output['stats'] = {
             'totalGroups': totalGroups, 
+            'fuzzyMatchedGroups': len(output['fuzzyMatched'].keys()),
             'unmatchedGroups': len(output['unmatchedGroups'].keys())
         }
 
