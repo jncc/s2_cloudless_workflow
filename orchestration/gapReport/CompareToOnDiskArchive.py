@@ -74,7 +74,7 @@ class CompareToOnDiskArchive(luigi.Task):
                     if len(matched) >= 1 or len(matchedOnTape) >= 1:
                         output['matchedGroups'][f'{sensor}_{captureDate}_{grid}'] = {
                             'matched': matched,
-                            'matchedOnTape': matchedOnTape,
+                            'matchedOnTape': list(set(matchedOnTape) - set(matched)),
                             'unmatched': unmatched
                         }
                     else:
@@ -85,7 +85,7 @@ class CompareToOnDiskArchive(luigi.Task):
                         if len(potentialMatches) >= 1 or len(potentialMatchesOnTape) >= 1:
                             output['fuzzyMatched'][f'{sensor}_{captureDate}_{grid}'] = {
                                 'potentialMatch': potentialMatches,
-                                'potentialMatchOnTape': potentialMatchesOnTape,
+                                'potentialMatchOnTape': list(set(potentialMatchesOnTape) - set(potentialMatches)),
                                 'unmatched': list(set(unmatched) - set(potentialMatches))
                             }
                         else:
