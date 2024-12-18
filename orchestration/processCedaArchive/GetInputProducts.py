@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 
 from ceda_ard_finder import SearchForProducts, SearchTextFileList
+from processCedaArchive.GetProductsFromGapReport import GetProductsFromGapReport
 
 log = logging.getLogger('luigi-interface')
 
@@ -30,6 +31,19 @@ class GetInputProducts(luigi.Task):
     def output(self):
         return luigi.LocalTarget(os.path.join(self.stateFolder, "GetInputProducts.json"))
 
+
+class GetRawProductsFromGapReport(GetInputProducts):
+    gapReportRootDir = luigi.parameter()
+    gapReportPath = luigi.parameter()
+    gapReportMode = luigi.ChoiceParameter(default='useMatched', choices=['useMatched', 'useUnmatched', 'useTapeMatched'], var_type = str)
+
+    def task(self):
+        return GetProductsFromGapReport(
+            stateFolder = self.stateFolder,
+            gapReportmode = self.gapReportMode,
+            gapReportPath = self.gapReportPath,
+            gapReportRootPath = self.gapReportRootDir
+        )
 
 class GetRawProductsFromTextFileList(GetInputProducts):
 

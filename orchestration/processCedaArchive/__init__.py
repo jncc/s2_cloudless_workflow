@@ -1,4 +1,5 @@
 import processCedaArchive.GetInputProducts
+import processCedaArchive.GetProductsFromGapReport
 import processCedaArchive.PrepareWorkingDirectories
 import processCedaArchive.SubmitJobs
 import processCedaArchive.SubmitJob
