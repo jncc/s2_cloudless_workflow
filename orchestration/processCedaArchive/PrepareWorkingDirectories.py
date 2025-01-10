@@ -3,7 +3,7 @@ import luigi
 import json
 import os
 
-from processCedaArchive.GetInputProducts import GetRawProductsFromFilters, GetRawProductsFromTextFileList
+from processCedaArchive.GetInputProducts import GetRawProductsFromFilters, GetRawProductsFromTextFileList, GetRawProductsFromInputFolder
 from luigi import LocalTarget
 from luigi.util import requires
 from pathlib import Path
@@ -32,17 +32,21 @@ class PrepareWorkingDirectories(luigi.Task):
     satelliteFilter = luigi.OptionalParameter(default=None)
 
     useInputList = luigi.BoolParameter(default=False)
+    skipSearch = luigi.BoolParameter(default=False)
 
     orbit = luigi.IntParameter(default=-9999)
     orbitDirection = luigi.Parameter(default='')
     wkt = luigi.Parameter(default='')    
 
     def requires(self):
-        if self.useInputList:
-            if Path(self.inputFolder).joinpath('inputs.txt').exists():
+        if self.skipSearch:
+            return self.clone(GetRawProductsFromInputFolder)
+        elif self.useInputList:
+            productInputList = Path(self.inputFolder).joinpath('inputs.txt')
+            if productInputList.exists():
                 return self.clone(GetRawProductsFromTextFileList)
             else:
-                raise ValueError(f'Product Input list {self.productInputList} does not exist')
+                raise ValueError(f'Product Input list {productInputList} does not exist')
         else:
             # First check that the parameters are set correctly
             for k in ['startDate', 'endDate', 'ardFilter', 'spatialOperator', 'satelliteFilter']:
@@ -67,8 +71,9 @@ class PrepareWorkingDirectories(luigi.Task):
             workingFolder = Path(self.tempFolder).joinpath(productName)
             workingFolder.mkdir()
 
-            inputPath = Path(self.inputFolder).joinpath(productPath.name)
-            inputPath.symlink_to(productPath)
+            if not self.skipSearch:
+                inputPath = Path(self.inputFolder).joinpath(productPath.name)
+                inputPath.symlink_to(productPath)
 
             stateFolder = Path(self.jobStateFolder).joinpath(productPath.with_suffix('').name)
             stateFolder.mkdir()

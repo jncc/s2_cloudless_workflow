@@ -6,6 +6,7 @@ from datetime import datetime
 
 from ceda_ard_finder import SearchForProducts, SearchTextFileList
 from processCedaArchive.GetProductsFromGapReport import GetProductsFromGapReport
+from processCedaArchive.GetProductsFromInputFolder import GetProductsFromInputFolder
 
 log = logging.getLogger('luigi-interface')
 
@@ -77,4 +78,12 @@ class GetRawProductsFromFilters(GetInputProducts):
             orbit=self.orbit,
             orbitDirection=self.orbitDirection,
             wkt=self.wkt
+        )
+    
+class GetRawProductsFromInputFolder(GetInputProducts):
+
+    def task(self):
+        return GetProductsFromInputFolder(
+            stateFolder=self.stateFolder,
+            productLocation=self.inputFolder
         )
