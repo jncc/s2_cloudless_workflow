@@ -18,8 +18,6 @@ class GetInputProducts(luigi.Task):
 
         result = yield self.task()
 
-        products = []
-
         with result.open("r") as inputProducts:
             input = json.load(inputProducts)
             if len(input["productList"]) == 0:
@@ -33,8 +31,8 @@ class GetInputProducts(luigi.Task):
 
 
 class GetRawProductsFromGapReport(GetInputProducts):
-    gapReportRootDir = luigi.parameter()
-    gapReportPath = luigi.parameter()
+    gapReportRootDir = luigi.Parameter()
+    gapReportPath = luigi.Parameter()
     gapReportMode = luigi.ChoiceParameter(default='useMatched', choices=['useMatched', 'useUnmatched', 'useTapeMatched'], var_type = str)
 
     def task(self):
