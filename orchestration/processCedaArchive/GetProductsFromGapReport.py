@@ -3,7 +3,6 @@ import luigi
 import json
 import os
 
-from processCedaArchive.GetInputProducts import GetRawProductsFromFilters, GetRawProductsFromTextFileList
 from luigi import LocalTarget
 from luigi.util import requires
 from pathlib import Path
