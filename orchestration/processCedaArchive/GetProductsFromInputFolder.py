@@ -13,10 +13,14 @@ class GetProductsFromInputFolder(luigi.Task):
     inputFolder = luigi.Parameter()
 
     def run(self):
-        products = glob.glob(self.inputFolder, "S2*")
+        products = glob.glob(os.path.join(self.inputFolder, "S2*"))
+
+        output = {
+            "productList": products
+        }
 
         with self.output().open("w") as outFile:
-            outFile.write(json.dumps(products, indent=4, sort_keys=True))
+            outFile.write(json.dumps(output, indent=4, sort_keys=True))
 
     def output(self):
         return luigi.LocalTarget(os.path.join(self.stateFolder, "GetProductsFromInputFolder.json"))

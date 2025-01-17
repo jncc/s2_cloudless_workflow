@@ -34,8 +34,8 @@ class GetInputProducts(luigi.Task):
 
 
 class GetRawProductsFromGapReport(GetInputProducts):
-    gapReportRootDir = luigi.parameter()
-    gapReportPath = luigi.parameter()
+    gapReportRootDir = luigi.Parameter()
+    gapReportPath = luigi.Parameter()
     gapReportMode = luigi.ChoiceParameter(default='useMatched', choices=['useMatched', 'useUnmatched', 'useTapeMatched'], var_type = str)
 
     def task(self):
@@ -85,5 +85,5 @@ class GetRawProductsFromInputFolder(GetInputProducts):
     def task(self):
         return GetProductsFromInputFolder(
             stateFolder=self.stateFolder,
-            productLocation=self.inputFolder
+            inputFolder=self.inputFolder
         )
