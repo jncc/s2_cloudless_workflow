@@ -19,8 +19,6 @@ class GetInputProducts(luigi.Task):
 
         result = yield self.task()
 
-        products = []
-
         with result.open("r") as inputProducts:
             input = json.load(inputProducts)
             if len(input["productList"]) == 0:

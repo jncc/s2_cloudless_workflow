@@ -4,19 +4,22 @@ import luigi
 import os
 
 from cloudmask.MergeOutputMasks import MergeOutputMasks
-from cloudmask.operations.reprojection import getEPSGCodeFromProjection, getReprojectedBoundingBox, getBoundBoxPinnedToGrid
+from cloudmask.operations.reprojection import getReprojectedBoundingBox, getBoundBoxPinnedToGrid
 from cloudmask.Defaults import VERSION
 
 from luigi import LocalTarget
 from luigi.util import requires
-from osgeo import gdal, osr
+from osgeo import gdal, gdalconst, osr
 from pathlib import Path
+from rio_cogeo.cogeo import cog_translate
+from rio_cogeo.profiles import cog_profiles
 
 log = logging.getLogger('luigi-interface')
 
 @requires(MergeOutputMasks)
 class ReprojectFiles(luigi.Task):
     stateFolder = luigi.Parameter()
+    tempFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
     inputPath = luigi.Parameter()
 
@@ -54,15 +57,19 @@ class ReprojectFiles(luigi.Task):
             (xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax) = getBoundBoxPinnedToGrid(xMin, yMin, xMax, yMax, xResolution, yResolution)
 
             warpOpt = gdal.WarpOptions(
-                format='COG',
+                format='GTiff',
                 dstSRS=f'EPSG:{self.reprojectionEPSG}',
                 dstNodata=0,
                 xRes=xResolution,
                 yRes=yResolution,
-                outputBounds=(xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax), 
-                creationOptions=['COMPRESS=LZW']
+                outputBounds=(xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax)
             )
-            gdal.Warp(f'{outputFilePath}', input['outputs']['combinedCloudAndShadowMask'], options=warpOpt)
+
+            intermediateFilePath = Path(self.tempFolder).joinpath(outputFilename)
+            gdal.Warp(f'{intermediateFilePath}', input['outputs']['combinedCloudAndShadowMask'], options=warpOpt)
+            output['intermediateFiles']['intermediateReprojectedFile'] = f'{intermediateFilePath}'
+
+            cog_translate(source=intermediateFilePath, dst_path=outputFilePath, dst_kwargs=cog_profiles.get("deflate"), forward_band_tags=True, use_cog_driver=True)
             output['outputs']['reprojectedCombinedCloudAndShadowMask'] = f'{outputFilePath}'
         elif self.reproject and not self.reprojectionEPSG:
             log.error(f'No EPSG code supplied, but reprojection requested')
