@@ -52,7 +52,7 @@ class MergeOutputMasks(luigi.Task):
         gdal.BuildVRT(f'{tempOutputStem}.vrt', [inputShadow, inputCloud], options=vrtOptions)
         output['intermediateFiles']['combinedCloudAndShadowMaskVRT'] = f'{tempOutputStem}.vrt'
 
-        translateOptions = gdal.TranslateOptions(format='COG', outputType=gdalconst.GDT_Byte, noData=0, creationOptions=['COMPRESS=LZW'], stats=True)
+        translateOptions = gdal.TranslateOptions(format='COG', outputType=gdalconst.GDT_Byte, noData=0, creationOptions=['COMPRESS=DEFLATE'], stats=True)
         gdal.Translate(outputImagePath, f'{tempOutputStem}.vrt', options=translateOptions)
         output['outputs']['combinedCloudAndShadowMask'] = outputImagePath
 

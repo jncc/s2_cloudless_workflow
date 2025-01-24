@@ -2,13 +2,13 @@ import json
 import logging
 import luigi
 import os
-import pathlib
 import shutil
 
 from cloudmask.RunQualityCheck import RunQualityCheck
 
 from luigi import LocalTarget
 from luigi.util import requires
+from pathlib import Path
 
 log = logging.getLogger('luigi-interface')
 
@@ -19,7 +19,7 @@ class CleanupTemporaryFiles(luigi.Task):
 
     keepIntermediates = luigi.BoolParameter(default=False)
     keepInputFiles = luigi.BoolParameter(default=False)
-    deleteTempFolder = luigi.BoolParameter(default=True)
+    deleteTempFolder = luigi.BoolParameter(default=False)
 
     def run(self):
         
@@ -28,24 +28,24 @@ class CleanupTemporaryFiles(luigi.Task):
 
         if not self.keepInputFiles:
             if input['inputs']['inputPathIsLink']:
-                os.unlink(input['inputs']['inputPath'])
+                Path(input['inputs']['inputPath']).unlink()
 
                 if input['inputs']['inputPath'] != input['inputs']['safeDir']:
                     # Safe Dir has been extracted into temp
                     shutil.rmtree(input['inputs']['safeDir'])
             else:
-                if pathlib.Path(input['inputs']['inputPath']).is_dir():
+                if Path(input['inputs']['inputPath']).is_dir():
                     shutil.rmtree(input['inputs']['inputPath'])
                 else:
-                    os.unlink(input['inputs']['inputPath'])
+                    Path(input['inputs']['inputPath']).unlink()
                     shutil.rmtree(input['inputs']['safeDir'])
       
         if not self.keepIntermediates:
             for path in os.listdir(self.tempFolder):
-                if os.path.isdir(os.path.abspath(os.path.join(self.tempFolder, path))):
-                    shutil.rmtree(os.path.join(self.tempFolder, path))
+                if Path(self.tempFolder).joinpath(path).resolve().is_dir():
+                    shutil.rmtree(Path(self.tempFolder).joinpath(path))
                 else:
-                    os.unlink(os.path.join(self.tempFolder, path))
+                    Path(self.tempFolder).joinpath(path).unlink()
             if self.deleteTempFolder:
                 shutil.rmtree(self.tempFolder)
 
