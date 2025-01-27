@@ -3,14 +3,14 @@ import luigi
 import json
 import os
 
-from gapReport.GetProductListFromCDSE import GetProductListFromCDSE
+from gapReport.CompareToOnDiskArchive import CompareToOnDiskArchive
 from luigi import LocalTarget
 from luigi.util import requires
 from pathlib import Path
 
 log = logging.getLogger('luigi-interface')
 
-@requires(GetProductListFromCDSE)
+@requires(CompareToOnDiskArchive)
 class GetDownloadList(luigi.Task):
     stateLocation = luigi.Parameter()
 
@@ -18,9 +18,10 @@ class GetDownloadList(luigi.Task):
         with self.input().open('r') as i:
             input = json.load(i)
 
-        products = []
-        for product in input['productList']:
-            products.append(product['productID'])
+        products = set()
+        for unmatched in input['unmatchedGroups']:
+            for product in input["unmatchedGroups"][unmatched]['unmatched']:
+                products.add(product)
 
         products = sorted(products)
 
@@ -29,7 +30,7 @@ class GetDownloadList(luigi.Task):
                 o.write(f"{product}\n")
     
     def input(self):
-        infile = Path(self.stateLocation).joinpath('GetProductListFromCDSE.json')
+        infile = Path(self.stateLocation).joinpath('CompareToOnDiskArchive.json')
         return LocalTarget(infile)
 
     def output(self):
