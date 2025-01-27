@@ -4,7 +4,6 @@ import json
 import os
 
 from luigi import LocalTarget
-from luigi.util import requires
 from pathlib import Path
 
 log = logging.getLogger('luigi-interface')
