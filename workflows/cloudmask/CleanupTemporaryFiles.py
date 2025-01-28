@@ -4,7 +4,7 @@ import luigi
 import os
 import shutil
 
-from cloudmask.RunQualityCheck import RunQualityCheck
+from cloudmask.MoveOutputFilesToFinalPath import MoveOutputFilesToFinalPath
 
 from luigi import LocalTarget
 from luigi.util import requires
@@ -12,7 +12,7 @@ from pathlib import Path
 
 log = logging.getLogger('luigi-interface')
 
-@requires(RunQualityCheck)
+@requires(MoveOutputFilesToFinalPath)
 class CleanupTemporaryFiles(luigi.Task):
     stateFolder = luigi.Parameter()
     tempFolder = luigi.Parameter()
@@ -55,7 +55,7 @@ class CleanupTemporaryFiles(luigi.Task):
             json.dump(output, o, indent=4)
 
     def input(self):
-        infile = os.path.join(self.stateFolder, 'RunQualityCheck.json')
+        infile = os.path.join(self.stateFolder, 'MoveOutputFilesToFinalPath.json')
         return LocalTarget(infile)
 
     def output(self):

@@ -1,5 +1,5 @@
-import cloudmask.CheckInputs
 import cloudmask.Defaults
+import cloudmask.CheckInputs
 import cloudmask.PrepareInputs
 import cloudmask.GenerateCloudmask
 import cloudmask.GenerateCloudShadowMask
@@ -8,4 +8,5 @@ import cloudmask.MergeOutputMasks
 import cloudmask.ReprojectFiles
 import cloudmask.GenerateMetadata
 import cloudmask.RunQualityCheck
+import cloudmask.MoveOutputFilesToFinalPath
 import cloudmask.CleanupTemporaryFiles

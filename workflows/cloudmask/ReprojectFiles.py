@@ -5,7 +5,6 @@ import os
 
 from cloudmask.MergeOutputMasks import MergeOutputMasks
 from cloudmask.operations.reprojection import getReprojectedBoundingBox, getBoundBoxPinnedToGrid
-from cloudmask.Defaults import VERSION
 
 from luigi import LocalTarget
 from luigi.util import requires
@@ -34,15 +33,12 @@ class ReprojectFiles(luigi.Task):
         if self.reproject and self.reprojectionEPSG:
             # Get SAFE dir base name to create output stem and create subfolders
             basename = Path(input['inputs']['safeDir']).with_suffix('').name
-            # Create output folder directories if required (in the form of {base}/reprojected/{year}/{month}/{day})
-            outputImagePath = Path(self.outputFolder).joinpath(VERSION).joinpath('reprojected', f'epsg_{self.reprojectionEPSG}', basename[11:15], basename[15:17], basename[17:19])
-            outputImagePath.mkdir(parents=True, exist_ok=True)
 
             outputFilename = f'{Path(input['inputs']['safeDir']).stem}.EPSG_{self.reprojectionEPSG}.CLOUDMASK.tif'
-            outputFilePath = os.path.join(outputImagePath, outputFilename)
+            outputFilePath = os.path.join(self.tempFolder, f'final_{outputFilename}')
             log.info(f'Reprojecting output files to {self.reprojectionEPSG}, output will be stored at {outputFilePath}')
             
-            sourceFile = gdal.Open(input['outputs']['combinedCloudAndShadowMask'], gdal.GA_ReadOnly)
+            sourceFile = gdal.Open(input['intermediateFiles']['combinedCloudAndShadowMask'], gdal.GA_ReadOnly)
             (xUpperLeft, xResolution, xSkew, yUpperLeft, ySkew, yResolution) = sourceFile.GetGeoTransform()
             xLowerRight = xUpperLeft + (sourceFile.RasterXSize * xResolution)
             yLowerRight = yUpperLeft + (sourceFile.RasterYSize * yResolution)
@@ -66,11 +62,11 @@ class ReprojectFiles(luigi.Task):
             )
 
             intermediateFilePath = Path(self.tempFolder).joinpath(outputFilename)
-            gdal.Warp(f'{intermediateFilePath}', input['outputs']['combinedCloudAndShadowMask'], options=warpOpt)
+            gdal.Warp(f'{intermediateFilePath}', input['intermediateFiles']['combinedCloudAndShadowMask'], options=warpOpt)
             output['intermediateFiles']['intermediateReprojectedFile'] = f'{intermediateFilePath}'
 
             cog_translate(source=intermediateFilePath, dst_path=outputFilePath, dst_kwargs=cog_profiles.get("deflate"), forward_band_tags=True, use_cog_driver=True)
-            output['outputs']['reprojectedCombinedCloudAndShadowMask'] = f'{outputFilePath}'
+            output['intermediateFiles']['reprojectedCombinedCloudAndShadowMask'] = f'{outputFilePath}'
         elif self.reproject and not self.reprojectionEPSG:
             log.error(f'No EPSG code supplied, but reprojection requested')
             return RuntimeError(f'No EPSG code supplied, but reprojection requested')
