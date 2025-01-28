@@ -1,0 +1,4 @@
+luigi==3.0.3
+ceda_ard_finder @ git+https://github.com/jncc/ceda_ard_finder.git@v0.0.2
+cdse_downloader @ git+https://github.com/jncc/cdse_downloader.git
+pyfunctional==1.5.0

@@ -1,0 +1,94 @@
+import json
+import logging
+import luigi
+import os
+
+from luigi import LocalTarget
+from luigi.util import requires
+from pathlib import Path
+from string import Template
+
+from processCedaArchive.PrepareWorkingDirectories import PrepareWorkingDirectories
+from processCedaArchive.SubmitJob import SubmitJob
+
+log = logging.getLogger('luigi-interface')
+
+@requires(PrepareWorkingDirectories)
+class SubmitJobs(luigi.Task):
+    stateFolder = luigi.Parameter()
+    outputFolder = luigi.Parameter()
+    tempFolder = luigi.Parameter()
+    templateFolder = luigi.Parameter()
+    templateFilename = luigi.Parameter()
+    s2CloudmaskContainer = luigi.Parameter()
+
+    testProcessing = luigi.BoolParameter(default=False)
+    cleanupWorkingFolders = luigi.BoolParameter(default=True)
+
+    def run(self):
+        with self.input().open('r') as i:
+            input = json.load(i)
+            output = input
+
+        with open(Path(self.templateFolder).joinpath(self.templateFilename), 'r') as templateSBatch:
+            sbatchTemplate = Template(templateSBatch.read())
+
+        tasks = []
+
+        for job in input['toProcess']:
+            buffer = ''
+            reproject = ''
+            dataMounts = ''
+            postRunCommands = ''
+
+            if job['bufferData']:
+                buffer = f'--bufferData --bufferDistance={str(job["bufferDistance"])}'
+            if job['reproject']:
+                reproject = f'--reproject --reprojectionEPSG={str(job["reprojectionEPSG"])}'
+            if job['dataMounts']:
+                for mount in job['dataMounts'].split(','):
+                    dataMounts = f'{dataMounts} --bind {mount}:{mount}'
+            if self.cleanupWorkingFolders:
+                postRunCommands = f'rm -r {job["workingFolder"]}'
+
+            sbatch = sbatchTemplate.substitute({
+                'dataMounts': dataMounts,
+                'workingMount': job['workingFolder'],
+                'stateMount': job['stateFolder'],
+                'inputMount': job['inputFolder'],
+                'outputMount': job['outputFolder'],
+                's2CloudmaskContainer': self.s2CloudmaskContainer,
+                'inputPath': '/input/' + Path(job['inputPath']).name,
+                'buffer': buffer,
+                'reproject': reproject,
+                'keepIntermediates': str(job['keepIntermediates']),
+                'postRunCommands': postRunCommands
+            })
+
+            sbatchScriptPath = Path(job['workingFolder']).joinpath(job['productName'] + '.sbatch')
+
+            with open(sbatchScriptPath, 'w') as jobSBatch:
+                jobSBatch.write(sbatch)
+
+            task = SubmitJob(
+                stateFolder = self.stateFolder,
+                name =  job['productName'],
+                sbatchScriptPath = f'{sbatchScriptPath}',
+                testProcessing = self.testProcessing
+            )
+
+            tasks.append(task)
+
+        yield tasks
+
+        with self.output().open('w') as o:
+            json.dump(output, o, indent=4)
+
+    def input(self):
+        infile = os.path.join(self.stateFolder, 'PrepareWorkingDirectories.json')
+        log.error(infile)
+        return LocalTarget(infile)
+
+    def output(self):
+        outFile = os.path.join(self.stateFolder, f'{type(self).__name__}.json')
+        return LocalTarget(outFile)

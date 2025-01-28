@@ -2,15 +2,13 @@ import json
 import logging
 import luigi
 import os
-import rasterio
-import rasterio.merge
 
 from cloudmask.BufferMasks import BufferMasks
 
 from luigi import LocalTarget
 from luigi.util import requires
 from osgeo import gdal, gdalconst
-
+from pathlib import Path
 
 log = logging.getLogger('luigi-interface')
 
@@ -27,9 +25,15 @@ class MergeOutputMasks(luigi.Task):
     def run(self):
         with self.input().open('r') as i:
             input = json.load(i)
-        
-        basename = os.path.basename(input['inputs']['safeDir'])[:-5]  
-        outputImageStem = os.path.join(self.outputFolder, f'{basename}_clouds')
+            output = input
+            output['outputs'] = {}
+
+        # Get SAFE dir base name to create output stem and create subfolders
+        basename = Path(input['inputs']['safeDir']).with_suffix('').name
+        # Create output filename stem under the temporary working directory
+        tempOutputStem = Path(self.tempFolder).joinpath(f'{basename}.CLOUDMASK')
+        # Create output filename stem under the created folder structure
+        outputImagePath = f'{tempOutputStem}.tif'
 
         inputCloud = input['intermediateFiles']['cloudMask']
         inputShadow = input['intermediateFiles']['cloudShadowMask']
@@ -41,13 +45,12 @@ class MergeOutputMasks(luigi.Task):
         log.info(f'Merging datafiles -> {inputShadow} | {inputCloud}')
 
         vrtOptions = gdal.BuildVRTOptions(VRTNodata=0)
-        gdal.BuildVRT(f'{outputImageStem}.vrt', [inputShadow, inputCloud], options=vrtOptions)
+        gdal.BuildVRT(f'{tempOutputStem}.vrt', [inputShadow, inputCloud], options=vrtOptions)
+        output['intermediateFiles']['combinedCloudAndShadowMaskVRT'] = f'{tempOutputStem}.vrt'
 
-        translateOptions = gdal.TranslateOptions(format='GTiff', outputType=gdalconst.GDT_Byte, noData=0)
-        gdal.Translate(f'{outputImageStem}.tif', f'{outputImageStem}.vrt', options=translateOptions)
-
-        output = input
-        output['intermediateFiles']['combinedCloudAndShadowMask'] = f'{outputImageStem}.tif'
+        translateOptions = gdal.TranslateOptions(format='COG', outputType=gdalconst.GDT_Byte, noData=0, creationOptions=['COMPRESS=DEFLATE'], stats=True)
+        gdal.Translate(outputImagePath, f'{tempOutputStem}.vrt', options=translateOptions)
+        output['intermediateFiles']['combinedCloudAndShadowMask'] = outputImagePath
 
         with self.output().open('w') as o:
             json.dump(output, o, indent=4)

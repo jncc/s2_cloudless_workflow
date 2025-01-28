@@ -1,0 +1,2 @@
+luigi==3.0.3
+cdse_downloader @ git+https://github.com/jncc/cdse_downloader.git
