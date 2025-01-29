@@ -162,4 +162,4 @@ cython_debug/
 state
 temp
 output
-workflows/luigi.cfg
+luigi.cfg

@@ -1,52 +1,44 @@
-FROM ubuntu:22.04 AS base
-
-ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
-ENV PATH=/opt/miniconda/bin:$PATH
+FROM ghcr.io/osgeo/gdal:ubuntu-small-3.10.1 AS base
 
 RUN apt update --fix-missing && \
-    apt install -y wget bzip2 ca-certificates curl git binutils vim make build-essential && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt install -y wget bzip2 ca-certificates curl git binutils vim make build-essential python3-pip && \
+    apt clean
+
+RUN mkdir -p /working/software
+RUN mkdir /working/software/pip
 
 FROM base AS prerequirements
-
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
-    /bin/bash ~/miniconda.sh -b -p /opt/miniconda && \
-    rm ~/miniconda.sh && \
-    ln -s /opt/miniconda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-    echo ". /opt/miniconda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-    echo "conda activate base" >> ~/.bashrc
-
-RUN conda install --yes -c conda-forge python=3.12 gdal=3.9 && conda update --yes -n base conda
 
 WORKDIR /working/software
 RUN  git clone --depth 1 --branch rios-1.4.17 https://github.com/ubarsc/rios.git
 WORKDIR /working/software/rios
-RUN pip install .
+RUN pip install . --break-system-packages
 
-RUN pip install scipy~=1.13.1
-
-RUN conda install --yes -c conda-forge rasterio=1.3.10
+RUN pip install scipy==1.15.1 --break-system-packages
+RUN GDAL_CONFIG=/usr/bin/gdal-config pip install --no-binary rasterio rasterio==1.4.3 --break-system-packages
 
 FROM prerequirements AS software
 
 WORKDIR /working/software
-RUN git clone --depth 1 --branch pythonfmask-0.5.9 https://github.com/ubarsc/python-fmask.git
+RUN git clone --depth 1 --branch pythonfmask-0.5.10 https://github.com/ubarsc/python-fmask.git
 WORKDIR /working/software/python-fmask
-RUN pip install .
+RUN pip install . --break-system-packages
 
 # HOTFIX
-#RUN sed -i "s|osr.UseExceptions()|#osr.UseExceptions()|g" /opt/miniconda/lib/python3.12/site-packages/fmask/sen2meta.py
+#RUN sed -i "s|osr.UseExceptions()|#osr.UseExceptions()|g" /working/software/miniforge/lib/python3.12/site-packages/fmask/sen2meta.py
 
-RUN pip install s2cloudless~=1.7.2
-
+RUN pip install s2cloudless==1.7.2 --break-system-packages
+ 
 RUN mkdir /working/data
+
+RUN pip install rio-cogeo==5.4.1 --break-system-packages
 
 FROM software AS workflow
 
-RUN conda install --yes -c conda-forge luigi
+RUN pip install luigi==3.6.0 --break-system-packages
 
 COPY ./workflows /working/software/workflows
 RUN cp /working/software/workflows/luigi.cfg.template /working/software/workflows/luigi.cfg
+RUN chmod +x /working/software/workflows/cloudmask/container/exec.sh
 
 WORKDIR /working
