@@ -47,11 +47,14 @@ def get_esa_product_names(cloudmask_files):
 
 def get_ard_files(esa_product_name, ard_dir):
     satellite = esa_product_name[0:3]
-    date = esa_product_name[11:19]
+    year = esa_product_name[11:15]
+    month = esa_product_name[15:17]
+    day = esa_product_name[17:19]
     orbit = esa_product_name[34:37]
     tile = esa_product_name[38:44]
 
-    pattern = f"{ard_dir}/**/{satellite}_{date}_*_{tile}*_ORB{orbit}_*_clouds.tif"
+    pattern = f"{ard_dir}/{year}/{month}/{day}/{satellite}_{year}{month}{day}_*_{tile}*_ORB{orbit}_*_clouds.tif"
+
     ard_files = glob.glob(pattern, recursive=True)
 
     return ard_files
