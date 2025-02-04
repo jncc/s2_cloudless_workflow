@@ -40,6 +40,8 @@ class SubmitJobs(luigi.Task):
             reproject = ''
             dataMounts = ''
             postRunCommands = ''
+            luigiTarget = 'CleanupTemporaryFiles'
+            endingStatefilePath = f'{Path(job["stateFolder"]).joinpath(f"{luigiTarget}.json")}'
 
             if job['bufferData']:
                 buffer = f'--bufferData --bufferDistance={str(job["bufferDistance"])}'
@@ -58,10 +60,12 @@ class SubmitJobs(luigi.Task):
                 'inputMount': job['inputFolder'],
                 'outputMount': job['outputFolder'],
                 's2CloudmaskContainer': self.s2CloudmaskContainer,
+                'luigiTarget': luigiTarget,
                 'inputPath': '/input/' + Path(job['inputPath']).name,
                 'buffer': buffer,
                 'reproject': reproject,
                 'keepIntermediates': str(job['keepIntermediates']),
+                'endingStatefilePath': endingStatefilePath,
                 'postRunCommands': postRunCommands
             })
 
