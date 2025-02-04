@@ -40,11 +40,19 @@ class RunQualityCheck(luigi.Task):
         with self.output().open('w') as o:
             json.dump(output, o, indent=4)
 
-    def checkForValidPixels(self, fileToCheck, validValues = [0,1,2]):
+    def checkForValidPixels(self, fileToCheck, validValues = [1,2], nodataValue = 0):
         with gdal.Open(fileToCheck, gdal.GA_ReadOnly) as ds:
             values = np.unique(np.array(ds.GetRasterBand(1).ReadAsArray()))
 
-        return (np.array_equiv(sorted(values), validValues), values.tolist(), validValues)
+        # No Data may not exist in the output, if it doesn't tack it on here so that the output is as expected
+        if not (nodataValue in values):
+            values = np.append([nodataValue], values)
+
+        # Add no data value to the valid values list so the equivalence test works with the potentially non existant 
+        # no data values in the output image
+        validValues.append(nodataValue)
+
+        return (np.array_equiv(sorted(values), validValues), values.tolist(), sorted(validValues))
     
     def outputValidChecks(self, type, statefile):
         (valid, values, expectedValues) = self.checkForValidPixels(statefile['intermediateFiles'][type])
