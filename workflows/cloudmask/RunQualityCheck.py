@@ -26,12 +26,12 @@ class RunQualityCheck(luigi.Task):
 
         validValues.update(self.outputValidChecks('combinedCloudAndShadowMask', input))
         if not validValues['combinedCloudAndShadowMask']['valid']:
-            raise RuntimeError(f'Found unexpected values in output image (combinedCloudAndShadowMask => {input['outputs']['combinedCloudAndShadowMask']}) => Found {validValues['combinedCloudAndShadowMask']['values']} : Expected {validValues['combinedCloudAndShadowMask']['expectedValues']}')
+            raise RuntimeError(f'Found unexpected values in output image (combinedCloudAndShadowMask => {input['intermediateFiles']['combinedCloudAndShadowMask']}) => Found {validValues['combinedCloudAndShadowMask']['values']} : Expected {validValues['combinedCloudAndShadowMask']['expectedValues']}')
 
         if 'reprojectedCombinedCloudAndShadowMask' in input['intermediateFiles']:
             validValues.update(self.outputValidChecks('reprojectedCombinedCloudAndShadowMask', input))
             if not validValues['reprojectedCombinedCloudAndShadowMask']['valid']:
-                raise RuntimeError(f'Found unexpected values in output image (reprojectedCombinedCloudAndShadowMask => {input['outputs']['reprojectedCombinedCloudAndShadowMask']}) => Found {validValues['reprojectedCombinedCloudAndShadowMask']['values']} : Expected {validValues['reprojectedCombinedCloudAndShadowMask']['expectedValues']}')
+                raise RuntimeError(f'Found unexpected values in output image (reprojectedCombinedCloudAndShadowMask => {input['intermediateFiles']['reprojectedCombinedCloudAndShadowMask']}) => Found {validValues['reprojectedCombinedCloudAndShadowMask']['values']} : Expected {validValues['reprojectedCombinedCloudAndShadowMask']['expectedValues']}')
 
         output['qualityCheck'] = {
             'validValues': validValues
@@ -42,9 +42,9 @@ class RunQualityCheck(luigi.Task):
 
     def checkForValidPixels(self, fileToCheck, validValues = [0,1,2]):
         with gdal.Open(fileToCheck, gdal.GA_ReadOnly) as ds:
-            values = np.unique(np.array(ds.GetRasterBand(1).ReadAsArray()))
+            values = np.sort(np.unique(np.array(ds.GetRasterBand(1).ReadAsArray())))
 
-        return (np.array_equiv(sorted(values), validValues), values.tolist(), validValues)
+        return (np.setdiff1d(values, validValues).size == 0, values.tolist(), validValues)
     
     def outputValidChecks(self, type, statefile):
         (valid, values, expectedValues) = self.checkForValidPixels(statefile['intermediateFiles'][type])
