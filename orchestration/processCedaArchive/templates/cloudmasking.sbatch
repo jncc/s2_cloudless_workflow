@@ -10,5 +10,5 @@
 /usr/bin/singularity exec --cleanenv $dataMounts --bind $workingMount:/work --bind $stateMount:/state --bind $inputMount:/input --bind $outputMount:/output $s2CloudmaskContainer /working/software/workflows/cloudmask/container/exec.sh --module cloudmask $luigiTarget --inputPath=$inputPath --stateFolder=/state --tempFolder=/work --outputFolder=/output $buffer $reproject --local-scheduler
 
 if [ -f $endingStatefilePath ]; then
-    $postRunCommands
+    rm -r $workingMount
 fi
