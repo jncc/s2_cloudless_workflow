@@ -3,6 +3,7 @@ import logging
 import luigi
 import os
 
+from datetime import datetime
 from luigi import LocalTarget
 from luigi.util import requires
 from pathlib import Path
@@ -22,6 +23,8 @@ class SubmitJobs(luigi.Task):
     templateFilename = luigi.Parameter()
     s2CloudmaskContainer = luigi.Parameter()
     testProcessing = luigi.BoolParameter(default=False)
+
+    slurmAccount = luigi.Parameter()
 
     def run(self):
         with self.input().open('r') as i:
@@ -49,6 +52,8 @@ class SubmitJobs(luigi.Task):
                     dataMounts = f'{dataMounts} --bind {mount}:{mount}'
 
             sbatch = sbatchTemplate.substitute({
+                'jobName': f'{Path(job["inputPath"]).name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}',
+                'account': self.slurmAccount,
                 'dataMounts': dataMounts,
                 'workingMount': job['workingFolder'],
                 'stateMount': job['stateFolder'],
