@@ -61,7 +61,7 @@ class SubmitJobs(luigi.Task):
                 'outputMount': job['outputFolder'],
                 's2CloudmaskContainer': self.s2CloudmaskContainer,
                 'luigiTarget': luigiTarget,
-                'inputPath': '/input/' + Path(job['inputPath']).name,
+                'inputPath': Path(job['inputPath']).name,
                 'buffer': buffer,
                 'reproject': reproject,
                 'keepIntermediates': str(job['keepIntermediates']),
