@@ -169,7 +169,7 @@ def writeOutIntermidateFileViaGDAL(numpyArray:numpy.ndarray, outputPath:str, inp
         driver = fileFormat
     )
 
-    with rasterio.open(outputPath, 'w', **inputProfile) as output:
+    with rasterio.open(outputPath, 'w', BIGTIFF='YES', **inputProfile) as output:
         output.write(numpyArray)
 
     return outputPath
