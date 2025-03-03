@@ -1,16 +1,16 @@
 [CheckInputs]
 stateFolder = /working/data/state
-tempFolder = /working/data/temp
+workingFolder = /working/data/work
 outputFolder = /working/data/output
 
 [PrepareInputs]
 stateFolder = /working/data/state
-tempFolder = /working/data/temp
+workingFolder = /working/data/work
 outputFolder = /working/data/output
 
 [GenerateCloudmask]
 stateFolder = /working/data/state
-tempFolder = /working/data/temp
+workingFolder = /working/data/work
 outputFolder = /working/data/output
 cloudDetectorThreshold = 0.6
 cloudDetectorAverageOver = 4
@@ -19,7 +19,7 @@ cloudDetectorAllBands = False
 
 [GenerateCloudShadowMask]
 stateFolder = /working/data/state
-tempFolder = /working/data/temp
+workingFolder = /working/data/work
 outputFolder = /working/data/output
 cloudDetectorThreshold = 0.6
 cloudDetectorAverageOver = 4
@@ -28,7 +28,7 @@ cloudDetectorAllBands = False
 
 [BufferMasks]
 stateFolder = /working/data/state
-tempFolder = /working/data/temp
+workingFolder = /working/data/work
 outputFolder = /working/data/output
 cloudDetectorThreshold = 0.6
 cloudDetectorAverageOver = 4
@@ -39,7 +39,7 @@ bufferDistance=100
 
 [MergeOutputMasks]
 stateFolder = /working/data/state
-tempFolder = /working/data/temp
+workingFolder = /working/data/work
 outputFolder = /working/data/output
 cloudDetectorThreshold = 0.6
 cloudDetectorAverageOver = 4
@@ -50,7 +50,7 @@ bufferDistance=100
 
 [ReprojectFiles]
 stateFolder = /working/data/state
-tempFolder = /working/data/temp
+workingFolder = /working/data/work
 outputFolder = /working/data/output
 cloudDetectorThreshold = 0.6
 cloudDetectorAverageOver = 4
@@ -63,7 +63,7 @@ reprojectionEPSG=27700
 
 [GenerateMetadata]
 stateFolder = /working/data/state
-tempFolder = /working/data/temp
+workingFolder = /working/data/work
 outputFolder = /working/data/output
 cloudDetectorThreshold = 0.6
 cloudDetectorAverageOver = 4
@@ -76,7 +76,7 @@ reprojectionEPSG=27700
 
 [RunQualityChecks]
 stateFolder = /working/data/state
-tempFolder = /working/data/temp
+workingFolder = /working/data/work
 outputFolder = /working/data/output
 cloudDetectorThreshold = 0.6
 cloudDetectorAverageOver = 4
@@ -89,7 +89,7 @@ reprojectionEPSG=27700
 
 [CleanupTemporaryFiles]
 stateFolder = /working/data/state
-tempFolder = /working/data/temp
+workingFolder = /working/data/work
 outputFolder = /working/data/output
 cloudDetectorThreshold = 0.6
 cloudDetectorAverageOver = 4

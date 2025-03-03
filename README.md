@@ -30,7 +30,7 @@ Assuming you have a downloaded and unzipped SAFE folder to feed it should run th
 PYTHONPATH='.' luigi --module cloudmask CleanupTemporaryFiles
     --inputPath=${PATH_TO_SAFE_DIR_OR_SAFE_ZIP}
     --stateFolder=${PATH_TO_STATE_FOLDER}
-    --tempFolder=${PATH_TO_TEMP_FOLDER}
+    --workingFolder=${PATH_TO_WORKING_FOLDER}
     --outputFolder=${PATH_TO_OUTPUT_FOLDER}
     --cloudDetectorThreshold=0.6
     --cloudDetectorAverageOver=4

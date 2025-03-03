@@ -14,7 +14,7 @@ Assuming you have a downloaded and unzipped SAFE folder to feed it should run th
 PYTHONPATH='.' luigi --module cloudmask CleanupTemporaryFiles
     --inputPath=${PATH_TO_SAFE_DIR_OR_SAFE_ZIP}
     --stateFolder=${PATH_TO_STATE_FOLDER}
-    --tempFolder=${PATH_TO_TEMP_FOLDER}
+    --workingFolder=${PATH_TO_WORKING_FOLDER}
     --outputFolder=${PATH_TO_OUTPUT_FOLDER}
     --cloudDetectorThreshold=0.6
     --cloudDetectorAverageOver=4
@@ -45,7 +45,7 @@ The `reproject` arguments control if the final output is reprojected and what EP
     --reprojectionEPSG=27700
 ```
 
-The `keep` arguments control if the temporary folder is cleared out after processing, setting the `keepIntermediates` flag to `True` (default: `False`) will clear the temporary files directory including the following named files; 
+The `keep` arguments control if the temporary working folder is cleared out after processing, setting the `keepIntermediates` flag to `True` (default: `False`) will clear the temporary working files directory including the following named files; 
 
 - `anglesFile` - Sun angle and azimuth layer used in `GenerateCloudShadowMask` step
 - `stackedTOA` - Stacked Top of Atmosphere layer generated directectly from the in put SAFE directory, used to generate `stackedTOARef` intermediate file and used in `GenerateCloudShadowMask` step
@@ -73,7 +73,7 @@ By default the workflow will delete the file or folder specified by the `inputPa
 - ReprojectFiles -> Optionally reprojects the mask to a given projection (default: EPSG:27700), only accepts EPSG codes at present
 - RunQualityChecks -> Runs a set of quality checks on the output files generated (**Currently Empty Task**)
 - GenerateMatada -> Generates a metadata file for the output masks (**Currently Empty Task**)
-- CleanupTemporaryFiles -> Removes files from the temporary processing directory (can optionally keep known temporary files and any loose files in the temporary directory)
+- CleanupTemporaryFiles -> Removes files from the temporary processing directory (can optionally keep known temporary working files and any loose files in the temporary working directory)
 
 ## Requirements
 

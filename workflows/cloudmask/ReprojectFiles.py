@@ -18,7 +18,7 @@ log = logging.getLogger('luigi-interface')
 @requires(MergeOutputMasks)
 class ReprojectFiles(luigi.Task):
     stateFolder = luigi.Parameter()
-    tempFolder = luigi.Parameter()
+    workingFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
     inputPath = luigi.Parameter()
 
@@ -35,7 +35,7 @@ class ReprojectFiles(luigi.Task):
             basename = Path(input['inputs']['safeDir']).with_suffix('').name
 
             outputFilename = f'{Path(input['inputs']['safeDir']).stem}.EPSG_{self.reprojectionEPSG}.CLOUDMASK.tif'
-            outputFilePath = os.path.join(self.tempFolder, f'final_{outputFilename}')
+            outputFilePath = os.path.join(self.workingFolder, f'final_{outputFilename}')
             log.info(f'Reprojecting output files to {self.reprojectionEPSG}, output will be stored at {outputFilePath}')
             
             sourceFile = gdal.Open(input['intermediateFiles']['combinedCloudAndShadowMask'], gdal.GA_ReadOnly)
@@ -61,7 +61,7 @@ class ReprojectFiles(luigi.Task):
                 outputBounds=(xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax)
             )
 
-            intermediateFilePath = Path(self.tempFolder).joinpath(outputFilename)
+            intermediateFilePath = Path(self.workingFolder).joinpath(outputFilename)
             gdal.Warp(f'{intermediateFilePath}', input['intermediateFiles']['combinedCloudAndShadowMask'], options=warpOpt)
             output['intermediateFiles']['intermediateReprojectedFile'] = f'{intermediateFilePath}'
 

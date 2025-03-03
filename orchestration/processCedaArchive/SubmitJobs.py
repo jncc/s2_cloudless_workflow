@@ -18,7 +18,7 @@ log = logging.getLogger('luigi-interface')
 class SubmitJobs(luigi.Task):
     stateFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
-    tempFolder = luigi.Parameter()
+    workingFolder = luigi.Parameter()
     templateFolder = luigi.Parameter()
     templateFilename = luigi.Parameter()
     s2CloudmaskContainer = luigi.Parameter()
@@ -56,6 +56,7 @@ class SubmitJobs(luigi.Task):
                 'account': self.slurmAccount,
                 'dataMounts': dataMounts,
                 'workingMount': job['workingFolder'],
+                'tmpMount': job['tmpFolder'],
                 'stateMount': job['stateFolder'],
                 'inputMount': job['inputFolder'],
                 'outputMount': job['outputFolder'],

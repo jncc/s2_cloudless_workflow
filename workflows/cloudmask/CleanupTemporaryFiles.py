@@ -15,11 +15,11 @@ log = logging.getLogger('luigi-interface')
 @requires(MoveOutputFilesToFinalPath)
 class CleanupTemporaryFiles(luigi.Task):
     stateFolder = luigi.Parameter()
-    tempFolder = luigi.Parameter()
+    workingFolder = luigi.Parameter()
 
     keepIntermediates = luigi.BoolParameter(default=False)
     keepInputFiles = luigi.BoolParameter(default=False)
-    deleteTempFolder = luigi.BoolParameter(default=False)
+    deleteWorkingFolder = luigi.BoolParameter(default=False)
 
     def run(self):
         
@@ -31,7 +31,7 @@ class CleanupTemporaryFiles(luigi.Task):
                 Path(input['inputs']['inputPath']).unlink()
 
                 if input['inputs']['inputPath'] != input['inputs']['safeDir']:
-                    # Safe Dir has been extracted into temp
+                    # Safe Dir has been extracted into working
                     shutil.rmtree(input['inputs']['safeDir'])
             else:
                 if Path(input['inputs']['inputPath']).is_dir():
@@ -41,13 +41,13 @@ class CleanupTemporaryFiles(luigi.Task):
                     shutil.rmtree(input['inputs']['safeDir'])
       
         if not self.keepIntermediates:
-            for path in os.listdir(self.tempFolder):
-                if Path(self.tempFolder).joinpath(path).resolve().is_dir():
-                    shutil.rmtree(Path(self.tempFolder).joinpath(path))
+            for path in os.listdir(self.workingFolder):
+                if Path(self.workingFolder).joinpath(path).resolve().is_dir():
+                    shutil.rmtree(Path(self.workingFolder).joinpath(path))
                 else:
-                    Path(self.tempFolder).joinpath(path).unlink()
-            if self.deleteTempFolder:
-                shutil.rmtree(self.tempFolder)
+                    Path(self.workingFolder).joinpath(path).unlink()
+            if self.deleteWorkingFolder:
+                shutil.rmtree(self.workingFolder)
 
         output = input
 
