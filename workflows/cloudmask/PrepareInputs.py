@@ -13,7 +13,7 @@ log = logging.getLogger('luigi-interface')
 @requires(CheckInputs)
 class PrepareInputs(luigi.Task):
     stateFolder = luigi.Parameter()
-    tempFolder = luigi.Parameter()
+    workingFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
     inputPath = luigi.Parameter()
 
@@ -23,8 +23,8 @@ class PrepareInputs(luigi.Task):
         with self.input().open('r') as i:
             input = json.load(i)
 
-        (stackedTOA, anglesFile) = generateStackedImageAndAnglesFile(input['inputs']['safeDir'], self.tempFolder, self.pixelSize, log)
-        stackedTOAReflectance = generateTOAReflectanceDN(stackedTOA, input['inputs']['safeDir'], self.tempFolder, log)
+        (stackedTOA, anglesFile) = generateStackedImageAndAnglesFile(input['inputs']['safeDir'], self.workingFolder, self.pixelSize, log)
+        stackedTOAReflectance = generateTOAReflectanceDN(stackedTOA, input['inputs']['safeDir'], self.workingFolder, log)
 
         output = input | {
             "intermediateFiles": {

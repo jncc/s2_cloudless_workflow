@@ -17,7 +17,7 @@ log = logging.getLogger('luigi-interface')
 @requires(RunQualityCheck)
 class MoveOutputFilesToFinalPath(luigi.Task):
     stateFolder = luigi.Parameter()
-    tempFolder = luigi.Parameter()
+    workingFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
 
     reproject = luigi.BoolParameter(default=False)
