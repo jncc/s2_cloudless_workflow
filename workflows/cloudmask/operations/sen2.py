@@ -140,7 +140,7 @@ def generateTOAReflectanceDN(stackedTOA:str, safeDir:str, outDir:str, log:loggin
 
     ds = gdal.Open(stackedTOA)
 
-    stackedTOARef = os.path.join(outDir, (f'{Path(stackedTOA).stem}_stacked_toar.tif'))
+    stackedTOARef = os.path.join(outDir, (f'{Path(stackedTOA).stem}_stacked_toar.img'))
     profile.update(
         dtype = rasterio.float32
     )
@@ -148,7 +148,8 @@ def generateTOAReflectanceDN(stackedTOA:str, safeDir:str, outDir:str, log:loggin
     return writeOutIntermidateFileViaGDAL(refDn, 
                                           stackedTOARef, 
                                           profile,
-                                          log)
+                                          log,
+                                          'HFA')
 
 def writeOutIntermidateFileViaGDAL(numpyArray:numpy.ndarray, outputPath:str, inputProfile, log:logging.Logger, fileFormat:str = 'GTiff'):
     """Writes out a given numpy array to a raster file using RasterIO
