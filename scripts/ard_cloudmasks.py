@@ -53,7 +53,7 @@ def get_ard_files(esa_product_name, ard_dir):
     orbit = esa_product_name[34:37]
     tile = esa_product_name[38:44]
 
-    pattern = f"{ard_dir}/{year}/{month}/{day}/{satellite}_{year}{month}{day}_*_{tile}*_ORB{orbit}_*_clouds.tif"
+    pattern = f"{ard_dir}/{year}/{month}/{day}/{satellite}_{year}{month}{day}_*_{tile}*_ORB{orbit}_*_osgb_clouds.tif"
 
     ard_files = glob.glob(pattern, recursive=True)
 
