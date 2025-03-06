@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name="$jobName"
 #SBATCH --time=02:00:00
-#SBATCH --mem=18G
+##SBATCH --mem=32G
 #SBATCH --account=$account
 #SBATCH --partition=standard
 #SBATCH --qos=standard
