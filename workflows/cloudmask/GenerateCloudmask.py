@@ -15,7 +15,7 @@ log = logging.getLogger('luigi-interface')
 @requires(PrepareInputs)
 class GenerateCloudmask(luigi.Task):
     stateFolder = luigi.Parameter()
-    tempFolder = luigi.Parameter()
+    workingFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
     inputPath = luigi.Parameter()
 
@@ -31,7 +31,7 @@ class GenerateCloudmask(luigi.Task):
 
         stackedTOARef = input['intermediateFiles']['stackedTOARef']
 
-        cloudmask = generateCloudMask(input['inputs']['safeDir'], stackedTOARef, self.tempFolder, log, threshold=self.cloudDetectorThreshold, average_over=self.cloudDetectorAverageOver, dilation_size=self.cloudDetectorDilationSize, all_bands=self.cloudDetectorAllBands)
+        cloudmask = generateCloudMask(input['inputs']['safeDir'], stackedTOARef, self.workingFolder, log, threshold=self.cloudDetectorThreshold, average_over=self.cloudDetectorAverageOver, dilation_size=self.cloudDetectorDilationSize, all_bands=self.cloudDetectorAllBands)
 
         output['intermediateFiles']['cloudMask'] = cloudmask
 

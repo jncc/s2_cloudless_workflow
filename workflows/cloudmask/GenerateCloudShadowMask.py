@@ -17,7 +17,7 @@ log = logging.getLogger('luigi-interface')
 @requires(GenerateCloudmask)
 class GenerateCloudShadowMask(luigi.Task):
     stateFolder = luigi.Parameter()
-    tempFolder = luigi.Parameter()
+    workingFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
     inputPath = luigi.Parameter()
 
@@ -29,11 +29,11 @@ class GenerateCloudShadowMask(luigi.Task):
             output = input
 
         basename = os.path.basename(input['inputs']['safeDir'])[:-5]  
-        outputImage = os.path.join(self.tempFolder, f'{basename}_mask_fmask_cloudshadow.tif')
+        outputImage = os.path.join(self.workingFolder, f'{basename}_mask_fmask_cloudshadow.tif')
 
         fmaskArgs = argparse.Namespace(
             safedir = input['inputs']['safeDir'],
-            tmpdir = self.tempFolder,
+            tmpdir = self.workingFolder,
             verbose = True
         )
         topMeta = readTopLevelMeta(fmaskArgs)
@@ -43,7 +43,7 @@ class GenerateCloudShadowMask(luigi.Task):
                 #inputSatImage,
                 input['intermediateFiles']['anglesFile'],
                 input['intermediateFiles']['cloudMask'],
-                self.tempFolder,
+                self.workingFolder,
                 topMeta.scaleVal,
                 log
             )

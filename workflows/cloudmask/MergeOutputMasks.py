@@ -15,7 +15,7 @@ log = logging.getLogger('luigi-interface')
 @requires(BufferMasks)
 class MergeOutputMasks(luigi.Task):
     stateFolder = luigi.Parameter()
-    tempFolder = luigi.Parameter()
+    workingFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
     inputPath = luigi.Parameter()
 
@@ -31,7 +31,7 @@ class MergeOutputMasks(luigi.Task):
         # Get SAFE dir base name to create output stem and create subfolders
         basename = Path(input['inputs']['safeDir']).with_suffix('').name
         # Create output filename stem under the temporary working directory
-        tempOutputStem = Path(self.tempFolder).joinpath(f'{basename}.CLOUDMASK')
+        tempOutputStem = Path(self.workingFolder).joinpath(f'{basename}.CLOUDMASK')
         # Create output filename stem under the created folder structure
         outputImagePath = f'{tempOutputStem}.tif'
 

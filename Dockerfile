@@ -5,7 +5,12 @@ RUN apt update --fix-missing && \
     apt clean
 
 RUN mkdir -p /working/software
-RUN mkdir /working/software/pip
+RUN mkdir -p /working/software/pip
+RUN mkdir -p /working/data
+RUN mkdir -p /working/data/state
+RUN mkdir -p /working/data/work
+RUN mkdir -p /working/data/input
+RUN mkdir -p /working/data/output
 
 FROM base AS prerequirements
 
@@ -28,8 +33,6 @@ RUN pip install . --break-system-packages
 #RUN sed -i "s|osr.UseExceptions()|#osr.UseExceptions()|g" /working/software/miniforge/lib/python3.12/site-packages/fmask/sen2meta.py
 
 RUN pip install s2cloudless==1.7.2 --break-system-packages
- 
-RUN mkdir /working/data
 
 RUN pip install rio-cogeo==5.4.1 --break-system-packages
 

@@ -12,7 +12,7 @@ log = logging.getLogger('luigi-interface')
 
 class PrepareWorkingDirectories(luigi.Task):
     stateFolder = luigi.Parameter()
-    tempFolder = luigi.Parameter()
+    workingFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
     inputFolder = luigi.Parameter()
     jobStateFolder = luigi.Parameter()
@@ -68,8 +68,11 @@ class PrepareWorkingDirectories(luigi.Task):
             productPath = Path(product)
             productName = productPath.with_suffix('').name
 
-            workingFolder = Path(self.tempFolder).joinpath(productName)
+            workingFolder = Path(self.workingFolder).joinpath(productName)
             workingFolder.mkdir(exist_ok=True)
+
+            tmpFolder = Path(workingFolder).joinpath('tmp')
+            tmpFolder.mkdir(exist_ok=True)
 
             inputPath = Path(self.inputFolder).joinpath(productPath.name)
 
@@ -86,6 +89,7 @@ class PrepareWorkingDirectories(luigi.Task):
                 'outputFolder': self.outputFolder,
                 'stateFolder': str(stateFolder),
                 'workingFolder': str(workingFolder),
+                'tmpFolder': str(tmpFolder),
                 'dataMounts': self.dataMounts,
                 'bufferData': self.bufferData,
                 'bufferDistance': self.bufferDistance,

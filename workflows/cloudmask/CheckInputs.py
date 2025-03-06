@@ -11,7 +11,7 @@ log = logging.getLogger('luigi-interface')
 
 class CheckInputs(luigi.Task):
     stateFolder = luigi.Parameter()
-    tempFolder = luigi.Parameter()
+    workingFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
     inputPath = luigi.Parameter()
 
@@ -48,12 +48,12 @@ class CheckInputs(luigi.Task):
                         safeDir = zipContentsInitialPathParts.pop()
                         
                         if os.path.splitext(safeDir)[1].lower() == '.safe':
-                            log.info(f'inputPath is a zip file and contents will be extracted to {os.path.join(self.tempFolder, safeDir)}')
-                            inputZip.extractall(self.tempFolder)
+                            log.info(f'inputPath is a zip file and contents will be extracted to {os.path.join(self.workingFolder, safeDir)}')
+                            inputZip.extractall(self.workingFolder)
 
                             output['inputs'] = output['inputs'] | {
                                 'zipFile': absInputPath,
-                                'safeDir': os.path.join(self.tempFolder, safeDir)
+                                'safeDir': os.path.join(self.workingFolder, safeDir)
                             }
                         else:
                             raise RuntimeError(f'Expected input Zip file to container a single .SAFE folder, found {safeDir}')
