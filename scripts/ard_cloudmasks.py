@@ -86,9 +86,7 @@ def get_processing_time_from_ard_name(ard_file):
 
     return processing_time
 
-def get_matching_split(product, esa_product_names, matching_ard_files):
-    esa_splits = get_all_esa_splits(product, esa_product_names)
-
+def get_matching_split(product, esa_splits, matching_ard_files):
     if len(esa_splits) > len(matching_ard_files):
         raise Exception(f"Can't match split granules - there are more ESA splits than ARD splits")
 
@@ -112,19 +110,18 @@ def match_esa_names_to_ard_names(esa_product_names, ard_dir):
     esa_ard_mappings = {}
 
     for esa_name in esa_product_names:
-        logging.info(f"Find matching ARD products for {esa_name}...")
         matching_ard_files = get_ard_files(esa_name, ard_dir)
-        logging.info(f"Found {len(matching_ard_files)} matching ARD files")
-        
-        if len(matching_ard_files) == 1:
+        logging.info(f"Found {len(matching_ard_files)} matching ARD files for {esa_name}")
+
+        esa_splits = get_all_esa_splits(esa_name, esa_product_names)
+        if len(esa_splits) == 1 and len(matching_ard_files) == 1 :
             esa_ard_mappings[esa_name] = os.path.basename(matching_ard_files[0])
-        elif len(matching_ard_files) > 1:
-            matching_split = get_matching_split(esa_name, esa_product_names, matching_ard_files)
+        elif len(esa_splits) > 1:
+            matching_split = get_matching_split(esa_name, esa_splits, matching_ard_files)
 
             logging.info(f"Found matching split {matching_split} for {esa_name}")
             esa_ard_mappings[esa_name] = os.path.basename(matching_split)
         else:
-            logging.warning(f"Couldn't find matching ARD file for {esa_name}")
             esa_ard_mappings[esa_name] = ""
 
     return esa_ard_mappings
@@ -132,12 +129,15 @@ def match_esa_names_to_ard_names(esa_product_names, ard_dir):
 def get_file_mappings(esa_ard_mappings, cloudmask_files, output_dir):
     file_mappings = {}
 
+    
     for esa_product in esa_ard_mappings:
         esa_filepath =  [filepath for filepath in cloudmask_files if esa_product in os.path.basename(filepath)][0]
-
         ard_filename = esa_ard_mappings[esa_product]
-        date_dirs = os.path.join(ard_filename[4:8], ard_filename[8:10], ard_filename[10:12])
-        ard_filepath = os.path.join(output_dir, date_dirs, ard_filename)
+        ard_filepath = ""
+        
+        if ard_filename:
+            date_dirs = os.path.join(ard_filename[4:8], ard_filename[8:10], ard_filename[10:12])
+            ard_filepath = os.path.join(output_dir, date_dirs, ard_filename)
 
         file_mappings[esa_filepath] = ard_filepath
 
@@ -145,17 +145,20 @@ def get_file_mappings(esa_ard_mappings, cloudmask_files, output_dir):
 
 def create_output_files(file_mappings, symlink):
     for esa_filepath, ard_filepath in file_mappings.items():
-        ard_folder = os.path.dirname(ard_filepath)
-        os.makedirs(ard_folder, exist_ok=True)
+        if ard_filepath:
+            ard_folder = os.path.dirname(ard_filepath)
+            os.makedirs(ard_folder, exist_ok=True)
 
-        if symlink:
-            logging.info(f"Creating symlink from {ard_filepath} to {esa_filepath}")
-            if os.path.exists(ard_filepath):
-                os.remove(ard_filepath)
-            os.symlink(esa_filepath, ard_filepath)
+            if symlink:
+                logging.info(f"Creating symlink from {ard_filepath} to {esa_filepath}")
+                if os.path.exists(ard_filepath):
+                    os.remove(ard_filepath)
+                os.symlink(esa_filepath, ard_filepath)
+            else:
+                logging.info(f"Copying file from {ard_filepath} to {esa_filepath}")
+                shutil.copy(esa_filepath, ard_filepath)
         else:
-            logging.info(f"Copying file from {ard_filepath} to {esa_filepath}")
-            shutil.copy(esa_filepath, ard_filepath)
+            logging.info(f"Skipping output creation for {esa_filepath}, no ARD was found")
 
 def get_product_version_mappings(esa_products):
     '''
@@ -238,14 +241,20 @@ def main(start_date, end_date, input_dir, ard_dir, output_dir, symlink, report_f
 
     esa_ard_mappings = match_esa_names_to_ard_names(esa_product_names, ard_dir)
     file_mappings = get_file_mappings(esa_ard_mappings, cloudmask_files, output_dir)
+    output_count = sum(1 for output in file_mappings.values() if output)
 
-    logging.info(f"Creating {len(file_mappings)} output files...")
+    logging.info(f"Creating {output_count} output files...")
 
     create_output_files(file_mappings, symlink)
 
     if report_file:
         logging.info(f"Generating CSV report at {report_file}")
         generate_report(file_mappings, report_file)
+
+    if len(file_mappings) != output_count:
+        logging.warning(f"Only created {output_count} out of {len(file_mappings)} expected output files, check the logs/report to see which ones are missing")
+    else:
+        logging.info(f"Successfully created all {len(file_mappings)} output files")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Create ARD compatible cloud mask files from the S2 cloudless outputs")
