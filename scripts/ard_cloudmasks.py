@@ -124,7 +124,8 @@ def match_esa_names_to_ard_names(esa_product_names, ard_dir):
             logging.info(f"Found matching split {matching_split} for {esa_name}")
             esa_ard_mappings[esa_name] = os.path.basename(matching_split)
         else:
-            raise Exception(f"Couldn't find matching ARD file for {esa_name}")
+            logging.warning(f"Couldn't find matching ARD file for {esa_name}")
+            esa_ard_mappings[esa_name] = ""
 
     return esa_ard_mappings
 
