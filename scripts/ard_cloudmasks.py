@@ -88,7 +88,8 @@ def get_processing_time_from_ard_name(ard_file):
 
 def get_matching_split(product, esa_splits, matching_ard_files):
     if len(esa_splits) > len(matching_ard_files):
-        raise Exception(f"Can't match split granules - there are more ESA splits than ARD splits")
+        logging.warning(f"Can't match split granules for {product} - there are more ESA splits than ARD splits")
+        return ""
 
     esa_splits_sorted = sorted(esa_splits, key=lambda y: y[44:-1]) # sort by processing time
     
