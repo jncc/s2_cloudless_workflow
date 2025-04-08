@@ -4,7 +4,6 @@ import luigi
 import os
 
 from cloudmask.MergeOutputMasks import MergeOutputMasks
-from cloudmask.operations.reprojection import getReprojectedBoundingBox, getBoundBoxPinnedToGrid
 
 from luigi import LocalTarget
 from luigi.util import requires
@@ -39,26 +38,27 @@ class ReprojectFiles(luigi.Task):
             log.info(f'Reprojecting output files to {self.reprojectionEPSG}, output will be stored at {outputFilePath}')
             
             sourceFile = gdal.Open(input['intermediateFiles']['combinedCloudAndShadowMask'], gdal.GA_ReadOnly)
+            # TODO: We assume are using the same unit in input and reprojected outputs, should really check this to make
+            # it generic and translate between different types of units
             (xUpperLeft, xResolution, xSkew, yUpperLeft, ySkew, yResolution) = sourceFile.GetGeoTransform()
-            xLowerRight = xUpperLeft + (sourceFile.RasterXSize * xResolution)
-            yLowerRight = yUpperLeft + (sourceFile.RasterYSize * yResolution)
-
-            inputProjection = osr.SpatialReference(sourceFile.GetProjection())
             
             code = int(self.reprojectionEPSG)
             outputProjection = osr.SpatialReference()
             outputProjection.ImportFromEPSG(code)
-
-            (xMin, yMin, xMax, yMax) = getReprojectedBoundingBox(min(xUpperLeft, xLowerRight), min(yUpperLeft, yLowerRight), max(xUpperLeft, xLowerRight), max(yUpperLeft, yLowerRight), inputProjection, outputProjection)
-            (xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax) = getBoundBoxPinnedToGrid(xMin, yMin, xMax, yMax, xResolution, yResolution)
+            outputProjectionExtent = outputProjection.GetAreaOfUse()
+            outputProjectionCutline = f'POLYGON(({outputProjectionExtent.west_lon_degree} {outputProjectionExtent.south_lat_degree}, {outputProjectionExtent.west_lon_degree} {outputProjectionExtent.north_lat_degree}, {outputProjectionExtent.east_lon_degree} {outputProjectionExtent.north_lat_degree}, {outputProjectionExtent.east_lon_degree} {outputProjectionExtent.south_lat_degree}, {outputProjectionExtent.west_lon_degree} {outputProjectionExtent.south_lat_degree}))'
 
             warpOpt = gdal.WarpOptions(
                 format='GTiff',
                 dstSRS=f'EPSG:{self.reprojectionEPSG}',
                 dstNodata=0,
+                cutlineWKT=outputProjectionCutline,
+                cutlineSRS='EPSG:4326',
+                resampleAlg=gdalconst.GRA_Bilinear,
+                targetAlignedPixels=True,
+                multithread=True,
                 xRes=xResolution,
-                yRes=yResolution,
-                outputBounds=(xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax)
+                yRes=yResolution
             )
 
             intermediateFilePath = Path(self.workingFolder).joinpath(outputFilename)
