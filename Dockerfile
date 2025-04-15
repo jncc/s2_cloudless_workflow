@@ -33,7 +33,6 @@ RUN pip install . --break-system-packages
 #RUN sed -i "s|osr.UseExceptions()|#osr.UseExceptions()|g" /working/software/miniforge/lib/python3.12/site-packages/fmask/sen2meta.py
 
 RUN pip install s2cloudless==1.7.3 --break-system-packages
-
 RUN pip install rio-cogeo==5.4.1 --break-system-packages
 
 FROM software AS workflow
