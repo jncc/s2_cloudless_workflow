@@ -104,7 +104,6 @@ class ReprojectFiles(luigi.Task):
                 cutline = shapely.from_wkt(boundsClipped.ExportToWkt())
                 # Buffer cutline a little to avoid reprojection issues
                 cutlineBuffered = cutline.buffer(0.01, join_style='mitre')
-                print(cutlineBuffered.wkt)
 
                 # Crop output warped image to the cutline bounds to create output images
                 warpOpt = gdal.WarpOptions(
