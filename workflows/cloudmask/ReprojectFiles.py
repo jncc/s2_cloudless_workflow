@@ -78,7 +78,7 @@ class ReprojectFiles(luigi.Task):
             sourcePrj.ImportFromWkt(sourceFile.GetProjectionRef())
             targetPrj = osr.SpatialReference()
             targetPrj.ImportFromEPSG(4326)
-            # Force lat / lon order
+            # Force lat / lon order to be X/Y
             targetPrj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
             transform = osr.CoordinateTransformation(sourcePrj, targetPrj)
             bounds.Transform(transform)
