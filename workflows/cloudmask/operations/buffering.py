@@ -2,11 +2,7 @@ import os
 from osgeo import gdal,gdalconst,ogr
 from pathlib import Path
 
-def getBounds(datasource):
-    geoTransfrom = datasource.GetGeoTransform()
-    return [geoTransfrom[0], geoTransfrom[3], geoTransfrom[0] + (geoTransfrom[1] * datasource.RasterXSize), geoTransfrom[3] + (geoTransfrom[5] * datasource.RaserYSize)]
-
-def polygonizeData(tempFolder, basename, type, inputRaster, inputBand=1):
+def polygonizeData(tempFolder: str, basename: str, type: str, inputRaster: str, inputBand: int = 1):
     outputPath = os.path.join(tempFolder, f'{basename}_{type}.gpkg')
 
     driver = ogr.GetDriverByName('GPKG')
@@ -22,7 +18,7 @@ def polygonizeData(tempFolder, basename, type, inputRaster, inputBand=1):
 
     return outputPath
 
-def bufferData(vector, tempFolder, layerName, fieldName, fieldValue=1, outputFieldValue=1, bufferDist=100, createNewVectorFile=False):
+def bufferData(vector: str, tempFolder: str, layerName: str, fieldName: str, fieldValue: int = 1, outputFieldValue: int = 1, bufferDist: int = 100, createNewVectorFile: bool = False):
     dst = ogr.Open(vector, 1)
 
     # Filter out no data to return only masked data (i.e. data with value of 1)
@@ -60,7 +56,7 @@ def bufferData(vector, tempFolder, layerName, fieldName, fieldValue=1, outputFie
 
     return (outputVector, outputLayerName, outputFieldName)
 
-def rasterizeData(inputVector, inputLayerName, inputAttributeName, originalSource, tempFolder, basename, type):
+def rasterizeData(inputVector: str, inputLayerName: str, inputAttributeName: str, originalSource: str, tempFolder: str, basename: str, type: str):
     inputDatasource = ogr.Open(inputVector, gdalconst.GA_ReadOnly)
     inputLayer = inputDatasource.GetLayer(inputLayerName)
 

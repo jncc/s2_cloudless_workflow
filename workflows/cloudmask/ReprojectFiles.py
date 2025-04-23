@@ -2,13 +2,13 @@ import json
 import logging
 import luigi
 import os
+import shapely
 
 from cloudmask.MergeOutputMasks import MergeOutputMasks
-from cloudmask.operations.reprojection import getReprojectedBoundingBox, getBoundBoxPinnedToGrid
 
 from luigi import LocalTarget
 from luigi.util import requires
-from osgeo import gdal, gdalconst, osr
+from osgeo import gdal, gdalconst, ogr, osr
 from pathlib import Path
 from rio_cogeo.cogeo import cog_translate
 from rio_cogeo.profiles import cog_profiles
@@ -39,28 +39,92 @@ class ReprojectFiles(luigi.Task):
             log.info(f'Reprojecting output files to {self.reprojectionEPSG}, output will be stored at {outputFilePath}')
             
             sourceFile = gdal.Open(input['intermediateFiles']['combinedCloudAndShadowMask'], gdal.GA_ReadOnly)
+            # TODO: We assume are using the same unit in input and reprojected outputs, should really check this to make
+            # it generic and translate between different types of units
             (xUpperLeft, xResolution, xSkew, yUpperLeft, ySkew, yResolution) = sourceFile.GetGeoTransform()
-            xLowerRight = xUpperLeft + (sourceFile.RasterXSize * xResolution)
-            yLowerRight = yUpperLeft + (sourceFile.RasterYSize * yResolution)
-
-            inputProjection = osr.SpatialReference(sourceFile.GetProjection())
             
             code = int(self.reprojectionEPSG)
             outputProjection = osr.SpatialReference()
             outputProjection.ImportFromEPSG(code)
+            outputProjectionExtent = outputProjection.GetAreaOfUse()
+            outputProjectionCutline = f'POLYGON(({outputProjectionExtent.west_lon_degree} {outputProjectionExtent.south_lat_degree}, {outputProjectionExtent.west_lon_degree} {outputProjectionExtent.north_lat_degree}, {outputProjectionExtent.east_lon_degree} {outputProjectionExtent.north_lat_degree}, {outputProjectionExtent.east_lon_degree} {outputProjectionExtent.south_lat_degree}, {outputProjectionExtent.west_lon_degree} {outputProjectionExtent.south_lat_degree}))'
+            outputProjectionCutlinePolygon = ogr.CreateGeometryFromWkt(outputProjectionCutline)
+            outputProjectionCutlinePolygon.FlattenTo2D()
 
-            (xMin, yMin, xMax, yMax) = getReprojectedBoundingBox(min(xUpperLeft, xLowerRight), min(yUpperLeft, yLowerRight), max(xUpperLeft, xLowerRight), max(yUpperLeft, yLowerRight), inputProjection, outputProjection)
-            (xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax) = getBoundBoxPinnedToGrid(xMin, yMin, xMax, yMax, xResolution, yResolution)
+            # Get the bounds of the input file
+            (ulx, xres, xskew, uly, yskew, yres) = sourceFile.GetGeoTransform()
+            lrx = ulx + (sourceFile.RasterXSize * xres)
+            lry = uly + (sourceFile.RasterYSize * yres)
+            
+            # Create a polygon from the bounds of the input file
+            minX = min(lrx, ulx)
+            maxX = max(lrx, ulx)
+            minY = min(lry, uly)
+            maxY = max(lry, uly)
 
-            warpOpt = gdal.WarpOptions(
-                format='GTiff',
-                dstSRS=f'EPSG:{self.reprojectionEPSG}',
-                dstNodata=0,
-                xRes=xResolution,
-                yRes=yResolution,
-                outputBounds=(xPinnedMin, yPinnedMin, xPinnedMax, yPinnedMax)
-            )
+            ring = ogr.Geometry(ogr.wkbLinearRing)
+            ring.AddPoint(minX, minY)
+            ring.AddPoint(maxX, minY)
+            ring.AddPoint(maxX, maxY)
+            ring.AddPoint(minX, maxY)
+            ring.AddPoint(minX, minY)
 
+            bounds = ogr.Geometry(ogr.wkbPolygon)
+            bounds.AddGeometry(ring)
+            bounds.FlattenTo2D()
+
+            # Reproject the bounds to EPSG:4326
+            sourcePrj = osr.SpatialReference()
+            sourcePrj.ImportFromWkt(sourceFile.GetProjectionRef())
+            targetPrj = osr.SpatialReference()
+            targetPrj.ImportFromEPSG(4326)
+            # Force lat / lon order to be X/Y
+            targetPrj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            transform = osr.CoordinateTransformation(sourcePrj, targetPrj)
+            bounds.Transform(transform)
+
+            if bounds.Within(outputProjectionCutlinePolygon):
+                # If bounds of data are completely within the output projection extent, we can use the whole extent
+                log.info(f'Source data is within the output projection extent, no cutline needed')
+                warpOpt = gdal.WarpOptions(
+                    format='GTiff',
+                    dstSRS=f'EPSG:{self.reprojectionEPSG}',
+                    dstNodata=0,
+                    resampleAlg=gdalconst.GRA_Bilinear,
+                    targetAlignedPixels=True,
+                    multithread=True,
+                    xRes=xResolution,
+                    yRes=yResolution
+                )
+            elif bounds.Intersects(outputProjectionCutlinePolygon):
+                # If the bounds of the data intersect with the output projection extent, we need to create a cutline
+                log.info(f'Source data intersects with the output projection extent, creating cutline')
+                # Intersect with the projection extent and buffer a little to avoid some reporjection issues
+                boundsClipped = bounds.Intersection(outputProjectionCutlinePolygon)
+                cutline = shapely.from_wkt(boundsClipped.ExportToWkt())
+                # Buffer cutline a little to avoid reprojection issues
+                cutlineBuffered = cutline.buffer(0.01, join_style='mitre')
+
+                # Crop output warped image to the cutline bounds to create output images
+                warpOpt = gdal.WarpOptions(
+                    format='GTiff',
+                    dstSRS=f'EPSG:{self.reprojectionEPSG}',
+                    dstNodata=0,
+                    cutlineWKT=cutlineBuffered.wkt,
+                    cutlineSRS='EPSG:4326',
+                    cropToCutline=True,
+                    resampleAlg=gdalconst.GRA_Bilinear,
+                    targetAlignedPixels=True,
+                    multithread=True,
+                    xRes=xResolution,
+                    yRes=yResolution
+                )
+            else:
+                # If the bounds of the data do not intersect with the output projection extent, we should not reproject
+                # TODO: Bump this to a warning?
+                log.error(f'Output projection extent does not intersect with source data extent, would produce an empty file')
+                raise RuntimeError(f'Output projection extent does not intersect with source data extent')
+            
             intermediateFilePath = Path(self.workingFolder).joinpath(outputFilename)
             gdal.Warp(f'{intermediateFilePath}', input['intermediateFiles']['combinedCloudAndShadowMask'], options=warpOpt)
             output['intermediateFiles']['intermediateReprojectedFile'] = f'{intermediateFilePath}'
