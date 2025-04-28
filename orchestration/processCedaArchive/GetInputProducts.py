@@ -75,7 +75,8 @@ class GetRawProductsFromFilters(GetInputProducts):
             satelliteFilter=self.satelliteFilter,
             orbit=self.orbit,
             orbitDirection=self.orbitDirection,
-            wkt=self.wkt
+            wkt=self.wkt,
+            elasticsearchPageSize=10000
         )
     
 class GetRawProductsFromInputFolder(GetInputProducts):
