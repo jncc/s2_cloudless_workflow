@@ -3,13 +3,14 @@ import luigi
 import json
 import os
 
-from processCedaArchive.GetInputProducts import GetRawProductsFromFilters, GetRawProductsFromTextFileList, GetRawProductsFromInputFolder
+from processCedaArchive.GetInputProducts import GetInputProducts
 from luigi import LocalTarget
 from luigi.util import requires
 from pathlib import Path
 
 log = logging.getLogger('luigi-interface')
 
+@requires(GetInputProducts)
 class PrepareWorkingDirectories(luigi.Task):
     stateFolder = luigi.Parameter()
     workingFolder = luigi.Parameter()
@@ -23,36 +24,6 @@ class PrepareWorkingDirectories(luigi.Task):
     reproject = luigi.BoolParameter(default=True)
     reprojectionEPSG = luigi.Parameter(default='27700')
     keepIntermediates = luigi.BoolParameter(default=False)
-
-    # Ceda Ard Finder Params. Set them to None if not used
-    startDate = luigi.OptionalParameter(default=None)
-    endDate = luigi.OptionalParameter(default=None)
-    ardFilter = luigi.OptionalParameter(default="")
-    spatialOperator = luigi.OptionalParameter(default=None)
-    satelliteFilter = luigi.OptionalParameter(default=None)
-
-    useInputList = luigi.BoolParameter(default=False)
-    skipSearch = luigi.BoolParameter(default=False)
-
-    orbit = luigi.IntParameter(default=-9999)
-    orbitDirection = luigi.Parameter(default='')
-    wkt = luigi.Parameter(default='')    
-
-    def requires(self):
-        if self.skipSearch:
-            return self.clone(GetRawProductsFromInputFolder)
-        elif self.useInputList:
-            productInputList = Path(self.inputFolder).joinpath('inputs.txt')
-            if productInputList.exists():
-                return self.clone(GetRawProductsFromTextFileList)
-            else:
-                raise ValueError(f'Product Input list {productInputList} does not exist')
-        else:
-            # First check that the parameters are set correctly
-            for k in ['startDate', 'endDate', 'ardFilter', 'spatialOperator', 'satelliteFilter']:
-                if self.param_kwargs.get(k) is None:
-                    raise ValueError(f'Parameter {k} is not set')
-            return self.clone(GetRawProductsFromFilters)
 
     def run(self):
         with self.input().open('r') as i:
@@ -76,7 +47,7 @@ class PrepareWorkingDirectories(luigi.Task):
 
             inputPath = Path(self.inputFolder).joinpath(productPath.name)
 
-            if not self.skipSearch:
+            if not inputPath.exists:
                 inputPath.symlink_to(productPath)
 
             stateFolder = Path(self.jobStateFolder).joinpath(productPath.with_suffix('').name)

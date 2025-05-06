@@ -2,9 +2,11 @@ import luigi
 import json
 import os
 import logging
-from datetime import datetime
+import glob
+import re
 
-from ceda_ard_finder import SearchForProducts, SearchTextFileList
+from datetime import datetime, timedelta
+from pathlib import Path
 from processCedaArchive.GetProductsFromGapReport import GetProductsFromGapReport
 from processCedaArchive.GetProductsFromInputFolder import GetProductsFromInputFolder
 
@@ -15,73 +17,89 @@ class GetInputProducts(luigi.Task):
     stateFolder = luigi.Parameter()
     inputFolder = luigi.Parameter()
 
-    def run(self):
-
-        result = yield self.task()
-
-        with result.open("r") as inputProducts:
-            input = json.load(inputProducts)
-            if len(input["productList"]) == 0:
-                raise ValueError("No Products Found")
-
-        with self.output().open("w") as outFile:
-            outFile.write(json.dumps(input, indent=4, sort_keys=True))
-
-    def output(self):
-        return luigi.LocalTarget(os.path.join(self.stateFolder, "GetInputProducts.json"))
-
-
-class GetRawProductsFromGapReport(GetInputProducts):
-    gapReportRootDir = luigi.Parameter()
-    gapReportPath = luigi.Parameter()
-    gapReportMode = luigi.ChoiceParameter(default='useMatched', choices=['useMatched', 'useUnmatched', 'useTapeMatched'], var_type = str)
-
-    def task(self):
-        return GetProductsFromGapReport(
-            stateFolder = self.stateFolder,
-            gapReportmode = self.gapReportMode,
-            gapReportPath = self.gapReportPath,
-            gapReportRootPath = self.gapReportRootDir
-        )
-
-class GetRawProductsFromTextFileList(GetInputProducts):
-
-    def task(self):
-        return SearchTextFileList(
-            stateFolder=self.stateFolder,
-            productLocation=self.inputFolder
-        )
-
-class GetRawProductsFromFilters(GetInputProducts):
-    # Ceda Ard Finder Params
     startDate = luigi.Parameter()  # Date in YYYY-MM-DD format
     endDate = luigi.Parameter()
     ardFilter = luigi.Parameter(default="")
-    spatialOperator = luigi.ChoiceParameter(choices=["", "intersects", "disjoint", "contains", "within"])
-    satelliteFilter = luigi.Parameter()
+    dataFolder = luigi.Parameter()
 
-    # Optional, rarely used Params
-    orbit = luigi.IntParameter(default=-9999)
-    orbitDirection = luigi.Parameter(default="")
-    wkt = luigi.Parameter(default="")
+    useInputList = luigi.BoolParameter(default=False)
+    skipSearch = luigi.BoolParameter(default=False)
 
-    def task(self):
-        return SearchForProducts(
-            stateFolder=self.stateFolder,
-            startDate=datetime.strptime(self.startDate, "%Y-%m-%d"),  # Format str to datetime object
-            endDate=datetime.strptime(self.endDate, "%Y-%m-%d"),
-            ardFilter=self.ardFilter,
-            spatialOperator=self.spatialOperator,
-            satelliteFilter=self.satelliteFilter,
-            orbit=self.orbit,
-            orbitDirection=self.orbitDirection,
-            wkt=self.wkt
-        )
+    def getProductsFromFolder(self):
+        return glob.glob(os.path.join(self.inputFolder, "S2*"))
     
-class GetRawProductsFromInputFolder(GetInputProducts):
+    def getProductsFromFile(self):
+        productList = []
+        inputList = Path(self.inputFolder).joinpath('inputs.txt')
+        with open(inputList) as f:
+            productList = json.load(f)
 
-    def task(self):
-        return GetProductsFromInputFolder(
-            stateFolder=self.stateFolder,
-            inputFolder=self.inputFolder
-        )
+        return productList
+    
+    def getAllDates(self, startDate, endDate):
+        allDates = []
+
+        start = datetime.strptime(startDate, "%Y-%m-%d")
+        end = datetime.strptime(endDate, "%Y-%m-%d")
+        for x in range((end-start).days):
+            allDates.append(start+timedelta(days=x))
+
+        return allDates
+    
+    def getFilteredProducts(self, allProducts):
+        if not self.ardFilter:
+            return allProducts
+        
+        filteredProducts = []
+        for product in allProducts:
+            matches = re.search(self.ardFilter, product)
+            if matches:
+                filteredProducts.append(matches.group(0))
+
+        return filteredProducts
+
+    def searchForProducts(self):
+        allDates = self.getAllDates(self.startDate, self.endDate)
+
+        filteredProducts = []
+        for date in allDates:
+            dateString = date.isoformat() # YYYY-MM-DD
+            datePath = os.path.join(self.dataFolder, dateString[:4], dateString[5:7], dateString[8:10])
+            allProductsForDate = glob.glob(os.path.join(datePath, "S2*.zip"))
+
+            filteredProducts.extend(self.getFilteredProducts(allProductsForDate))
+
+        return filteredProducts
+    
+    def createSymlinks(self, products):
+        for product in products:
+            sourcePath = os.path.join(self.dataFolder, product[11:15], product[15:17], product[17:19], product)
+            destPath = os.path.join(self.inputFolder, product)
+            if not Path(sourcePath).exists:
+                raise Exception(f"{sourcePath} not found, can't create symlink")
+
+            os.symlink(sourcePath, destPath)
+
+    def run(self):
+        productList = []
+        if self.skipSearch:
+            productList = self.getProductsFromFolder()
+        elif self.useInputList:
+            productList = self.getProductsFromFile()
+            self.createSymlinks(productList)
+        else:
+            productList = self.searchForProducts()
+            self.createSymlinks(productList)
+
+        if len(productList) == 0:
+            raise ValueError("No Products Found")
+
+        output = {
+            "productList": productList
+        }
+        with self.output().open("w") as outFile:
+            outFile.write(json.dumps(output, indent=4, sort_keys=True))
+
+    def output(self):
+        return luigi.LocalTarget(os.path.join(self.stateFolder, "GetInputProducts.json"))
+    
