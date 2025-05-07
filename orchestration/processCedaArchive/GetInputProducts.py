@@ -17,8 +17,8 @@ class GetInputProducts(luigi.Task):
     stateFolder = luigi.Parameter()
     inputFolder = luigi.Parameter()
 
-    startDate = luigi.Parameter()  # Date in YYYY-MM-DD format
-    endDate = luigi.Parameter()
+    startDate = luigi.Parameter(default="")  # Date in YYYY-MM-DD format
+    endDate = luigi.Parameter(default="")
     ardFilter = luigi.Parameter(default="")
     dataFolder = luigi.Parameter()
 
