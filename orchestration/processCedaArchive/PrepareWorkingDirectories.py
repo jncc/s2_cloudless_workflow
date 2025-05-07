@@ -16,7 +16,6 @@ class PrepareWorkingDirectories(luigi.Task):
     workingFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
     inputFolder = luigi.Parameter()
-    jobStateFolder = luigi.Parameter()
     dataMounts = luigi.Parameter(default='')
 
     bufferData = luigi.BoolParameter(default=True)
@@ -39,7 +38,10 @@ class PrepareWorkingDirectories(luigi.Task):
             productPath = Path(product)
             productName = productPath.with_suffix('').name
 
-            workingFolder = Path(self.workingFolder).joinpath(productName)
+            workspaceFolder = Path(self.workingFolder).joinpath(productName)
+            workspaceFolder.mkdir(exist_ok=True)
+
+            workingFolder = workspaceFolder.joinpath('working')
             workingFolder.mkdir(exist_ok=True)
 
             tmpFolder = Path(workingFolder).joinpath('tmp')
@@ -50,7 +52,7 @@ class PrepareWorkingDirectories(luigi.Task):
             if not inputPath.exists:
                 inputPath.symlink_to(productPath)
 
-            stateFolder = Path(self.jobStateFolder).joinpath(productPath.with_suffix('').name)
+            stateFolder = workspaceFolder.joinpath('state')
             stateFolder.mkdir(exist_ok=True)
 
             output['toProcess'].append({
@@ -58,6 +60,7 @@ class PrepareWorkingDirectories(luigi.Task):
                 'inputFolder': self.inputFolder,
                 'inputPath': str(inputPath),
                 'outputFolder': self.outputFolder,
+                'workspaceFolder': str(workspaceFolder),
                 'stateFolder': str(stateFolder),
                 'workingFolder': str(workingFolder),
                 'tmpFolder': str(tmpFolder),

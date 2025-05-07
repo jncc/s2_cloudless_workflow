@@ -69,7 +69,7 @@ class SubmitJobs(luigi.Task):
                 'endingStatefilePath': endingStatefilePath
             })
 
-            sbatchScriptPath = Path(job['workingFolder']).joinpath(job['productName'] + '.sbatch')
+            sbatchScriptPath = Path(job['workspaceFolder']).joinpath(job['productName'] + '.sbatch')
 
             with open(sbatchScriptPath, 'w') as jobSBatch:
                 jobSBatch.write(sbatch)
