@@ -6,11 +6,6 @@ RUN apt update --fix-missing && \
 
 RUN mkdir -p /working/software
 RUN mkdir -p /working/software/pip
-RUN mkdir -p /working/data
-RUN mkdir -p /working/data/state
-RUN mkdir -p /working/data/work
-RUN mkdir -p /working/data/input
-RUN mkdir -p /working/data/output
 
 FROM base AS prerequirements
 
@@ -43,6 +38,11 @@ COPY ./workflows /working/software/workflows
 RUN cp /working/software/workflows/luigi.cfg.template /working/software/workflows/luigi.cfg
 RUN chmod +x /working/software/workflows/cloudmask/container/exec.sh
 
-WORKDIR /working
+RUN mkdir -p /input
+RUN mkdir -p /work
+RUN mkdir -p /state
+RUN mkdir -p /output
+
+WORKDIR /work
 
 ENTRYPOINT [ "/working/software/workflows/cloudmask/container/exec.sh" ]
