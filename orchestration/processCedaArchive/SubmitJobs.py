@@ -52,8 +52,8 @@ class SubmitJobs(luigi.Task):
                     dataMounts = f'{dataMounts} --bind {mount}:{mount}'
 
             sbatch = sbatchTemplate.substitute({
-                'jobName': f'{Path(job["inputPath"]).name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}',
                 'account': self.slurmAccount,
+                'workspaceFolder': job['workspaceFolder'],
                 'dataMounts': dataMounts,
                 'workingMount': job['workingFolder'],
                 'tmpMount': job['tmpFolder'],
