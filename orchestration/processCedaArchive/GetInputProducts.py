@@ -46,15 +46,15 @@ class GetInputProducts(luigi.Task):
 
         return allDates
     
-    def getFilteredProducts(self, allProducts):
-        if not self.ardFilter:
-            return allProducts
-        
+    def getFilteredProducts(self, allProducts):        
         filteredProducts = []
         for product in allProducts:
-            matches = re.search(self.ardFilter, product)
-            if matches:
-                filteredProducts.append(matches.group(0))
+            if self.ardFilter:
+                matches = re.search(self.ardFilter, product)
+                if matches:
+                    filteredProducts.append(matches.group(0))
+            else:
+                filteredProducts.append(os.path.basename(product))
 
         return filteredProducts
 
