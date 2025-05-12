@@ -7,8 +7,6 @@ import re
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from processCedaArchive.GetProductsFromGapReport import GetProductsFromGapReport
-from processCedaArchive.GetProductsFromInputFolder import GetProductsFromInputFolder
 
 log = logging.getLogger('luigi-interface')
 
