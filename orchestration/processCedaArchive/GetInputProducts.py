@@ -39,7 +39,7 @@ class GetInputProducts(luigi.Task):
 
         start = datetime.strptime(startDate, "%Y-%m-%d")
         end = datetime.strptime(endDate, "%Y-%m-%d")
-        for x in range((end-start).days):
+        for x in range((end-start).days + 1):
             allDates.append(start+timedelta(days=x))
 
         return allDates
