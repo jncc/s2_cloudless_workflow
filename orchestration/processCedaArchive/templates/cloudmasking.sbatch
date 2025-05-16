@@ -15,5 +15,5 @@
 
 if [ -f $endingStatefilePath ]; then
     rm -r $workingMount
-    rm $inputMount/$inputPath
+    rm -r $inputMount/$inputPath
 fi
