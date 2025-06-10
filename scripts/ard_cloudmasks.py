@@ -87,9 +87,9 @@ def get_processing_time_from_ard_name(ard_file):
     return processing_time
 
 def get_matching_split(product, esa_splits, matching_ard_files):
-    if len(esa_splits) > len(matching_ard_files):
-        logging.warning(f"Can't match split granules for {product} - there are more ESA splits than ARD splits")
-        return ""
+    if not len(esa_splits) == len(matching_ard_files):
+        logging.warning(f"Can't match split granules for {product} - there are {len(esa_splits)} ESA splits and {len(matching_ard_files)} ARD splits")
+        return None
 
     esa_splits_sorted = sorted(esa_splits, key=lambda y: y[44:-1]) # sort by processing time
     
@@ -99,7 +99,7 @@ def get_matching_split(product, esa_splits, matching_ard_files):
     else:
         ard_products_sorted = sorted(matching_ard_files, reverse=True)
 
-    matching_split = ""
+    matching_split = None
     for i, split in enumerate(esa_splits_sorted):
         if esa_splits_sorted[i] == product:
             matching_split = ard_products_sorted[i]
@@ -117,13 +117,14 @@ def match_esa_names_to_ard_names(esa_product_names, ard_dir):
         esa_splits = get_all_esa_splits(esa_name, esa_product_names)
         if len(esa_splits) == 1 and len(matching_ard_files) == 1 :
             esa_ard_mappings[esa_name] = os.path.basename(matching_ard_files[0])
-        elif len(esa_splits) > 1:
+        else:
             matching_split = get_matching_split(esa_name, esa_splits, matching_ard_files)
 
-            logging.info(f"Found matching split {matching_split} for {esa_name}")
-            esa_ard_mappings[esa_name] = os.path.basename(matching_split)
-        else:
-            esa_ard_mappings[esa_name] = ""
+            if matching_split:
+                logging.info(f"Found matching split {matching_split} for {esa_name}")
+                esa_ard_mappings[esa_name] = os.path.basename(matching_split)
+            else:
+                esa_ard_mappings[esa_name] = ""
 
     return esa_ard_mappings
 
