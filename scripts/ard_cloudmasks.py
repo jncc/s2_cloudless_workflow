@@ -158,7 +158,7 @@ def create_output_files(file_mappings, symlink):
                 os.symlink(esa_filepath, ard_filepath)
             else:
                 logging.info(f"Copying file from {ard_filepath} to {esa_filepath}")
-                shutil.copy(esa_filepath, ard_filepath)
+                shutil.copyfile(esa_filepath, ard_filepath)
         else:
             logging.info(f"Skipping output creation for {esa_filepath}, no matching ARD was found")
 

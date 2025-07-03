@@ -39,7 +39,7 @@ class MoveOutputFilesToFinalPath(luigi.Task):
         outputImagePath.mkdir(parents=True, exist_ok=True)
         
         logging.info(f'Copying temporary output combined cloud and shadow mask to {outputImagePath.joinpath(cloudmask.name)}')
-        shutil.copy(cloudmask, f'{outputImagePath.joinpath(cloudmask.name)}')
+        shutil.copyfile(cloudmask, f'{outputImagePath.joinpath(cloudmask.name)}')
         output['outputs']['combinedCloudAndShadowMask'] = f'{outputImagePath.joinpath(cloudmask.name)}'
         
         if self.reproject and self.reprojectionEPSG:
@@ -49,7 +49,7 @@ class MoveOutputFilesToFinalPath(luigi.Task):
             outputImagePath.mkdir(parents=True, exist_ok=True)
 
             logging.info(f'Copying temporary reprojected output combined cloud and shadow mask to {outputImagePath.joinpath(cloudmask.name.replace('final_', ''))}')
-            shutil.copy(cloudmask, f'{outputImagePath.joinpath(cloudmask.name.replace('final_', ''))}')
+            shutil.copyfile(cloudmask, f'{outputImagePath.joinpath(cloudmask.name.replace('final_', ''))}')
             output['outputs']['reprojectedCombinedCloudAndShadowMask']  = f'{outputImagePath.joinpath(cloudmask.name)}'
 
         with self.output().open('w') as o:
