@@ -14,18 +14,18 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(me
 def get_all_date_strings(start_date, end_date):
     start = datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.strptime(end_date, "%Y-%m-%d")
-    return [(start+timedelta(days=x)).strftime("%Y%m%d") for x in range((end-start).days + 1)]
+    return [start+timedelta(days=x) for x in range((end-start).days + 1)]
 
 def get_cloudmask_files(start_date, end_date, input_dir):
     all_dates = get_all_date_strings(start_date, end_date)
 
-    pattern = os.path.join(input_dir, "**", "*CLOUDMASK.tif")
-    all_files = glob.glob(pattern, recursive=True)
-
     files_in_date_range = []
     for date in all_dates:
-        matching_files = [file for file in all_files if date in file]
-        files_in_date_range.extend(matching_files)
+        datePath = date.strftime("%Y/%m/%d")
+        pattern = os.path.join(input_dir, datePath, "*CLOUDMASK.tif")
+        date_files = glob.glob(pattern)
+        
+        files_in_date_range.extend(date_files)
 
     return files_in_date_range
 
