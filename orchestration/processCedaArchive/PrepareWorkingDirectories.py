@@ -38,7 +38,9 @@ class PrepareWorkingDirectories(luigi.Task):
             productPath = Path(product)
             productName = productPath.with_suffix('').name
 
-            workspaceFolder = Path(self.workingFolder).joinpath(productName)
+            basketName = Path(self.inputFolder).name
+
+            workspaceFolder = Path(self.workingFolder).joinpath(f"{basketName}_{productName}")
             workspaceFolder.mkdir(exist_ok=True)
 
             workingFolder = workspaceFolder.joinpath('working')

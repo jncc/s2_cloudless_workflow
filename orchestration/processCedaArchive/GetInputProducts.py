@@ -3,7 +3,6 @@ import json
 import os
 import logging
 import glob
-import re
 
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -14,25 +13,25 @@ log = logging.getLogger('luigi-interface')
 class GetInputProducts(luigi.Task):
     stateFolder = luigi.Parameter()
     inputFolder = luigi.Parameter()
-
-    startDate = luigi.Parameter(default="")  # Date in YYYY-MM-DD format
-    endDate = luigi.Parameter(default="")
-    ardFilter = luigi.Parameter(default="")
-    dataFolder = luigi.Parameter()
-
-    useInputList = luigi.BoolParameter(default=False)
-    skipSearch = luigi.BoolParameter(default=False)
+    dataFolder = luigi.Parameter(default=None)
 
     def getProductsFromFolder(self):
         return glob.glob(os.path.join(self.inputFolder, "S2*"))
     
-    def getProductsFromFile(self):
-        productList = []
-        inputList = Path(self.inputFolder).joinpath('inputs.txt')
-        with open(inputList) as f:
-            productList = json.load(f)
+    def getProductsFromFile(self, inputFile):
+        productList = set()
 
-        return productList
+        with open(inputFile) as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                elif line.startswith("S2"):
+                    productList.add(line.rstrip())
+                else:
+                    log.info(f'Ignoring {line.rstrip}, name does not start with "S2"')
+                    continue
+
+        return list(productList)
     
     def getAllDates(self, startDate, endDate):
         allDates = []
@@ -44,50 +43,34 @@ class GetInputProducts(luigi.Task):
 
         return allDates
     
-    def getFilteredProducts(self, allProducts):        
-        filteredProducts = []
-        for product in allProducts:
-            if self.ardFilter:
-                matches = re.search(self.ardFilter, product)
-                if matches:
-                    filteredProducts.append(matches.group(0))
-            else:
-                filteredProducts.append(os.path.basename(product))
-
-        return filteredProducts
-
-    def searchForProducts(self):
-        allDates = self.getAllDates(self.startDate, self.endDate)
-
-        filteredProducts = []
-        for date in allDates:
-            dateString = date.isoformat() # YYYY-MM-DD
-            datePath = os.path.join(self.dataFolder, dateString[:4], dateString[5:7], dateString[8:10])
-            allProductsForDate = glob.glob(os.path.join(datePath, "S2*.zip"))
-
-            filteredProducts.extend(self.getFilteredProducts(allProductsForDate))
-
-        return filteredProducts
-    
     def createSymlinks(self, products):
-        for product in products:
-            sourcePath = os.path.join(self.dataFolder, product[11:15], product[15:17], product[17:19], product)
-            destPath = os.path.join(self.inputFolder, product)
-            if not Path(sourcePath).exists:
-                raise Exception(f"{sourcePath} not found, can't create symlink")
+        if self.dataFolder:
+            for product in products:
+                if not product.endswith(".zip"):
+                    productName = f"{product}.zip"
+                else:
+                    productName = product
 
-            os.symlink(sourcePath, destPath)
+                sourcePath = os.path.join(self.dataFolder, product[11:15], product[15:17], product[17:19], productName)
+                destPath = os.path.join(self.inputFolder, productName)
+                if not Path(sourcePath).exists:
+                    raise Exception(f"{sourcePath} not found, can't create symlink")
+
+                os.symlink(sourcePath, destPath)
+        else:
+            raise Exception("dataFolder param needs to be set to create symlinks")
 
     def run(self):
         productList = []
-        if self.skipSearch:
-            productList = self.getProductsFromFolder()
-        elif self.useInputList:
-            productList = self.getProductsFromFile()
+
+        inputFile = Path(os.path.join(self.inputFolder, "inputs.txt"))
+        if inputFile.is_file():
+            log.info("Using inputs file")
+            productList = self.getProductsFromFile(inputFile)
             self.createSymlinks(productList)
+            inputFile.unlink()
         else:
-            productList = self.searchForProducts()
-            self.createSymlinks(productList)
+            productList = self.getProductsFromFolder()
 
         if len(productList) == 0:
             raise ValueError("No Products Found")
