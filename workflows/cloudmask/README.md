@@ -61,7 +61,7 @@ By default the workflow will delete the file or folder specified by the `inputPa
 
 ## Worfklow Tasks
 
-- CheckInputs -> Check input arguments and folders (**Currently Empty Task**)
+- CopyInputs -> Copy input product to working directory
 - PrepareInputs -> Does some preparatory work on the input SAFE directory
     - Stacks bands into a single image
     - Generates Solar and Satellite Azimuth and Zenith Angles output for help with detecting shadows

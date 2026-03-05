@@ -1,4 +1,4 @@
-[CheckInputs]
+[CopyInputs]
 stateFolder = /working/data/state
 workingFolder = /working/data/work
 outputFolder = /working/data/output

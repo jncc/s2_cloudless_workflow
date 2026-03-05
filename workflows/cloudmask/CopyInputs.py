@@ -1,5 +1,6 @@
 import json
 import logging
+import shutil
 import luigi
 import os
 import pathlib
@@ -9,7 +10,7 @@ from luigi import LocalTarget
 
 log = logging.getLogger('luigi-interface')
 
-class CheckInputs(luigi.Task):
+class CopyInputs(luigi.Task):
     stateFolder = luigi.Parameter()
     workingFolder = luigi.Parameter()
     outputFolder = luigi.Parameter()
@@ -35,8 +36,11 @@ class CheckInputs(luigi.Task):
 
         if os.path.isdir(absInputPath):
             if (os.path.splitext(absInputPath)[1].lower() == '.safe'):
-                log.info(f'inputPath appears to be a SAFE directory')
-                output['inputs']['safeDir'] = absInputPath
+                workingSafeDir = os.path.join(self.workingFolder, os.path.basename(absInputPath))
+                log.info(f'{absInputPath} appears to be a SAFE directory, copying to {workingSafeDir}')
+
+                shutil.copytree(absInputPath, workingSafeDir, dirs_exist_ok=True)
+                output['inputs']['safeDir'] = workingSafeDir
             else:
                 raise RuntimeError(f'Expected inputPath to be a .SAFE folder, inputPath is currently: {absInputPath}')
         elif (os.path.isfile(absInputPath)):

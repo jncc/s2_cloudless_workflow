@@ -3,14 +3,14 @@ import logging
 import luigi
 import os
 
-from cloudmask.CheckInputs import CheckInputs
+from cloudmask.CopyInputs import CopyInputs
 from cloudmask.operations.sen2 import generateStackedImageAndAnglesFile, generateTOAReflectanceDN
 from luigi import LocalTarget
 from luigi.util import requires
 
 log = logging.getLogger('luigi-interface')
 
-@requires(CheckInputs)
+@requires(CopyInputs)
 class PrepareInputs(luigi.Task):
     stateFolder = luigi.Parameter()
     workingFolder = luigi.Parameter()
@@ -38,7 +38,7 @@ class PrepareInputs(luigi.Task):
             json.dump(output, o, indent=4)
 
     def input(self):
-        infile = os.path.join(self.stateFolder, 'CheckInputs.json')
+        infile = os.path.join(self.stateFolder, 'CopyInputs.json')
         return LocalTarget(infile)
 
     def output(self):

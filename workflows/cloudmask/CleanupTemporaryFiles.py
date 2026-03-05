@@ -29,17 +29,8 @@ class CleanupTemporaryFiles(luigi.Task):
         if not self.keepInputFiles:
             if input['inputs']['inputPathIsLink']:
                 Path(input['inputs']['inputPath']).unlink()
-
-                if input['inputs']['inputPath'] != input['inputs']['safeDir']:
-                    # Safe Dir has been extracted into working
-                    shutil.rmtree(input['inputs']['safeDir'])
             else:
-                if Path(input['inputs']['inputPath']).is_dir():
-                    shutil.rmtree(input['inputs']['inputPath'])
-                else:
-                    Path(input['inputs']['inputPath']).unlink()
-                    shutil.rmtree(input['inputs']['safeDir'])
-      
+                shutil.rmtree(input['inputs']['inputPath'])
         if not self.keepIntermediates:
             for path in os.listdir(self.workingFolder):
                 if Path(self.workingFolder).joinpath(path).resolve().is_dir():
